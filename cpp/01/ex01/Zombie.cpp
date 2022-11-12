@@ -1,8 +1,7 @@
 #include "Zombie.hpp"
 
-Zombie::Zombie(std::string name) {
+Zombie::Zombie(void) {
   std::cout << "Constructing..." << std::endl;
-  setName(name);
   return ;
 }
 
