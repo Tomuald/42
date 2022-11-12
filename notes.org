@@ -14,7 +14,7 @@ A basic class is declared in an .hpp file, like this:
 
 #+NAME: basic-class-declare
 #+HEADER: :noweb yes :main no
-#+BEGIN_SRC C
+#+BEGIN_SRC C++
 class Sample
 {
 public:
@@ -31,7 +31,7 @@ function reaches it return() call.
 
 #+NAME: basic-class-define
 #+HEADER: :noweb yes :main no
-#+BEGIN_SRC C
+#+BEGIN_SRC C++
 #include "Sample.class.hpp"
 
 Sample::Sample(void)
@@ -48,7 +48,7 @@ Sample::~Sample(void)
 To initialize an instance of class:
 #+NAME: basic-class-instance
 #+HEADER: :noweb yes :main no
-#+BEGIN_SRC C
+#+BEGIN_SRC C++
 #include "Sample.class.hpp"
 
 int main(int argc, char **argv)
@@ -66,7 +66,7 @@ These are variables and functions defined in the body of a class.
 
 #+NAME: member-attr-func
 #+HEADER: :noweb yes :main no
-#+BEGIN_SRC C
+#+BEGIN_SRC C++
 // Sample.class.hpp
 class Sample(void)
 {
@@ -109,7 +109,7 @@ The this-> keyword is a pointer to the current instance. It's useful when defini
 
 #+NAME: basic-this
 #+HEADER: :noweb yes :main no
-#+BEGIN_SRC C
+#+BEGIN_SRC C++
 class Sample
 {
 public:
@@ -123,7 +123,7 @@ public:
 
 #+NAME: basic-this-2
 #+HEADER: :noweb yes :main no
-#+BEGIN_SRC C
+#+BEGIN_SRC C++
 #include "Sample.class.hpp"
 
 Sample::Sample(void)
@@ -145,7 +145,7 @@ class's construction. Given the class below:
 
 #+NAME: init-lists
 #+HEADER: :noweb yes :main no
-#+BEGIN_SRC C
+#+BEGIN_SRC C++
 // Sample.class.hpp
 class Sample
 {
@@ -185,7 +185,7 @@ that by initializing them with the same concept of [[initialization lists][initi
 #+NAME: const-init
 #+HEADER: :exports code
 #+HEADER: :main no :noweb yes
-#+BEGIN_SRC C
+#+BEGIN_SRC C++
 // Sample.class.hpp
 class Sample
 {
@@ -234,7 +234,7 @@ public.
 #+NAME: visibility
 #+HEADER: :exports code
 #+HEADER: :main no :noweb yes
-#+BEGIN_SRC C
+#+BEGIN_SRC C++
 class Sample
 {
 private:
@@ -253,7 +253,7 @@ Naming conventions are get<Attrb>(), set<Attrb>().
 #+NAME: accessors
 #+HEADER: :exports code
 #+HEADER: :main no :noweb yes
-#+BEGIN_SRC C
+#+BEGIN_SRC C++
 // Sample.class.hpp
 
 class Sample
@@ -284,7 +284,7 @@ that, you have to set up a few things.
 #+NAME: comparisons
 #+HEADER: :exports code
 #+HEADER: :main no :noweb yes
-#+BEGIN_SRC C
+#+BEGIN_SRC C++
 // Sample.class.hpp
 
 class Sample {
@@ -322,7 +322,7 @@ declare non-member attributes and functions.
 #+NAME: non-member
 #+HEADER: :exports code
 #+HEADER: :main no :noweb yes
-#+BEGIN_SRC C
+#+BEGIN_SRC C++
 // Sample.class.hpp
 
 class Sample {
@@ -365,7 +365,7 @@ So... Pointers...
 #+NAME: pointers-member
 #+HEADER: :exports code
 #+HEADER: :main no :noweb yes
-#+BEGIN_SRC C
+#+BEGIN_SRC C++
 // Sample.class.hpp
 
 class Sample {
@@ -411,7 +411,8 @@ Even though malloc is allowed in C++, NEVER use it. Use new and delete
 because these functions call, respectively, the object's constructor
 and destructor. Here's how you can allocate memory in C++:
 
-#+begin_src C
+#+NAME: memory-allocation
+#+BEGIN_SRC C++
 class Student {
   private:
     ...
@@ -427,20 +428,19 @@ int main(void)
   delete [] students; // strange syntax, but that's how it works.
   return (0); // classes are destroyed
 }
-#+end_src
-
-#+RESULTS:
+#+END_SRC
 
 One thing to keep in mind, when allocating arrays of structures, it is
 IMPOSSIBLE to initialize values at construction. Therefore, you must
 find a way around that.
+
 ** references
 Somewhat similar to pointers.
 
 A reference is a const pointer that is always dereferenced and is
 never NULL.
 
-#+begin_src C
+#+BEGIN_SRC C++
 #include <iostream>
 
 int main(void)
@@ -450,6 +450,58 @@ int main(void)
   int& numRef = num;
   std::cout << num << numRef << std::endl;
 }
-#+end_src
+#+END_SRC
 
 #+RESULTS:
+: 4242
+
+** filestreams
+As we've seen, we can interact with streams like stdout, stdin, and
+stderr. All simple enough. And, as in C, you can interact with
+filestreams. To do so, we use the ~<fstream>~ header.
+
+#+NAME: filestreams
+#+BEGIN_SRC C++
+#include <fstream>
+#include <iostream>
+
+int main(void) {
+  std::ifstream ifs("numbers");
+  unsigned int dst;
+  unsigned int dst2;
+
+  ifs >> dst >> dst2;
+  std::cout << dst << " " << dst2 << std::endl;
+  ifs.close();
+}
+#+END_SRC
+
+The line ~std::ifstream ifs("numbers")~ associates an input file
+stream (ifstream) with the (opened) file 'numbers'.
+
+There are also string streams apparently. Look that up. I've written
+some basic info about it in code... But that's not enough. There's
+likely an initialization method to interact with a string or
+something...
+
+#+NAME: string-streams
+#+BEGIN_SRC C++
+#include <string>
+#include <iostream>
+#include <sstream>
+
+int main(void) {
+  std::stringstream ss;
+
+  ss << 100 << ' ' << 200;
+
+  int foo,bar;
+  ss >> foo >> bar;
+  std::cout << foo << std::endl;
+  std::cout << bar << std::endl;
+}
+#+END_SRC
+
+#+RESULTS: string-streams
+: 100
+: 200
