@@ -438,7 +438,17 @@ find a way around that.
 Somewhat similar to pointers.
 
 A reference is a const pointer that is always dereferenced and is
-never NULL.
+never NULL. The reference is not a copy or a pointer; it IS the
+object. From the [[https://isocpp.org/wiki/faq/references#overview-refs][C++ FAQ]]:
+
+#+begin_quote
+Even though a reference is often implemented using an address in the
+underlying assembly language, please do not think of a reference as a
+funny looking pointer to an object. A reference is the object. It is
+not a pointer to the object, nor a copy of the object. It is the
+object.
+#+end_quote
+
 
 #+BEGIN_SRC C++
 #include <iostream>
