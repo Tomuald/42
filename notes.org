@@ -489,6 +489,35 @@ int main(void) {
 The line ~std::ifstream ifs("numbers")~ associates an input file
 stream (ifstream) with the (opened) file 'numbers'.
 
+A simple way to read through files. You can redirect output to any
+kind of stream.
+
+#+NAME: reading-filestreams
+#+BEGIN_SRC C++ :results output
+#include <fstream>
+#include <string>
+#include <iostream>
+
+int main(void) {
+  std::ofstream ofs;
+  std::ifstream ifs;
+
+  ifs.open("/Users/tgarriss/Projects/42/cpp/01/ex04/somefile.txt");
+  ofs.open("/Users/tgarriss/Projects/42/cpp/01/ex04/somefile.replace");
+  if (ifs.is_open())
+  {
+    std::string line;
+    while (std::getline(ifs, line))
+      ofs << line << std::endl;
+  }
+  else
+    std::cout << "FAILURE!" << std::endl;
+  return (0);
+}
+#+END_SRC
+
+#+RESULTS: reading-filestreams
+
 There are also string streams apparently. Look that up. I've written
 some basic info about it in code... But that's not enough. There's
 likely an initialization method to interact with a string or
