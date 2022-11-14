@@ -426,7 +426,7 @@ Still a bit unclear on using them; especially, the use of ~this->~ and
 how it maps to the functions. Is it getting the address of that
 function for that instance? Gotta figure that out...
 
-** PROJ new and delete
+** TODO new and delete
 :PROPERTIES:
 :SCHEDULED: <2022-11-14>
 
@@ -575,3 +575,31 @@ There's a bunch of neat functions for strings. Look at:
 - .append()
 - .assign()
 - .replace()
+** switch statements
+switch statements are the same in CPP and C. They're straightforward
+to use. Simply remember that they fall through:
+
+#+NAME: switch-statements
+#+BEGIN_SRC C++
+#include <iostream>
+
+int main(void) {
+  int i;
+
+  i = 1;
+  switch (i) {
+    case 1:
+      std::cout << "Case 1!" << std::endl;
+    case 2:
+      std::cout << "Case 2!" << std::endl;
+      break;
+    case 3:
+      std::cout << "Case 3!" << std::endl;
+
+  }
+}
+#+END_SRC
+
+#+RESULTS: switch-statements
+| Case | 1! |
+| Case | 2! |
