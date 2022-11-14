@@ -406,7 +406,31 @@ class instance.
 The ~instance.*p = 21~ syntax means, assign 21 to the value of the ~p~
 variable of the instance ~instance~. If you're dealing with a pointer
 to a structure, use the -> notation.
-** new and delete
+
+Declaring an array of function pointers:
+#+NAME: array-of-fpointers
+#+BEGIN_SRC C++
+  void (Sample::*functions[4])(void) = {
+    &Sample::fct1,
+    &Sample::fct2,
+    &Sample::fct2,
+    &Sample::fct4
+  };
+
+  for (int i = 0; i < 4; i++) {
+    (this->*functions[i])();
+  }
+#+END_SRC
+
+Still a bit unclear on using them; especially, the use of ~this->~ and
+how it maps to the functions. Is it getting the address of that
+function for that instance? Gotta figure that out...
+
+** PROJ new and delete
+:PROPERTIES:
+:SCHEDULED: <2022-11-14>
+
+:END:
 Even though malloc is allowed in C++, NEVER use it. Use new and delete
 because these functions call, respectively, the object's constructor
 and destructor. Here's how you can allocate memory in C++:
@@ -544,3 +568,10 @@ int main(void) {
 #+RESULTS: string-streams
 : 100
 : 200
+** strings
+There's a bunch of neat functions for strings. Look at:
+- .compare()
+- .size()
+- .append()
+- .assign()
+- .replace()
