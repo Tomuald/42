@@ -599,7 +599,85 @@ int main(void) {
   }
 }
 #+END_SRC
+** adhoc polymorphism
+adhoc polymorphism (aka function overloading) is a principle in C++
+that allows us to use the same name for functions that take different
+parameters. A simple example:
 
-#+RESULTS: switch-statements
-| Case | 1! |
-| Case | 2! |
+#+NAME: adhoc-polymorphism
+#+BEGIN_SRC C++ :results output
+#include <iostream>
+
+// Sample.class.hpp
+class Sample {
+  public:
+    Sample(void);
+    ~Sample(void);
+
+    void bar(char const c) const;
+    void bar(int const n) const;
+    void bar(float const z) const;
+    void bar(Sample const &i) const;
+};
+
+// Sample.class.cpp
+Sample::Sample(void) {};
+Sample::~Sample(void) {};
+
+void Sample::bar(char const c) const {
+  std::cout << "char" << std::endl;
+}
+
+void Sample::bar(int const n) const {
+  std::cout << "int" << std::endl;
+}
+
+void Sample::bar(float const z) const {
+  std::cout << "float" << std::endl;
+}
+
+void Sample::bar(Sample const &i) const {
+  std::cout << "sample" << std::endl;
+}
+
+// main.cpp
+int main(void) {
+  Sample s;
+  Sample &s2 = s;
+
+  s.bar('a');
+  s.bar(42);
+  s.bar(4.2f);
+  s.bar(s2);
+}
+#+END_SRC
+
+#+RESULTS: adhoc-polymorphism
+: char
+: int
+: float
+: sample
+** operator overload
+Operator Overloading allows us to augment C++ operators; to add on
+specific functionalities.
+
+There are several ways to write operators in a mathematical
+expression: prefix, infix, postfix (~+ 1 1~, ~1 + 1~, ~1 1 +~). The
+prefix notation, also called functional syntax because of its
+ressemblance to a function call (~+(1, 1)~), is the key to
+understanding operator overloads.
+
+Let's imagine that we're working with instances of classes. The same
+idea might be expressed as: ~1.+(1)~. From the instance '1', call the
+member function '+' with the argument '1'.
+
+Operator Overloads are declared in their respective .hpp files. The
+syntax goes like this:
+
+@timestamp minute ~3
+#+BEGIN_SRC C++
+class Integer {
+  Integer & operator=(Integer const & rhs);
+  Integer operator+(Integer const & rhs) const;
+};
+#+END_SRC
