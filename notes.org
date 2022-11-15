@@ -173,14 +173,23 @@ value pX implicitly.
 Initialization lists can be much more complex than this. We'll dive
 into more detail later on.
 ** const keyword
-const keyword are great. They allow to set values that will NEVER be
+const keywords are great. They allow to set values that will NEVER be
 allowed to be modified or assigned to. It might be the difference
 between a working program and a program that fucks up royally. Make
 sure to use these keywords freely when writing C++ code; it will make
 it more robust, and harder to break.
 
-Since const variables can NEVER be assigned a value, we need to bypass
-that by initializing them with the same concept of [[initialization lists][initialization lists]].
+Be mindful of where the const keyword goes though!
+  1) ~const int i~ declares a constant integer
+  2) ~const int * i2 || int const * i2~ declares a variable pointer to a const integer
+  3) ~int * const i3~ declares a constant pointer to a variable integer
+  4) ~int const * const i2~ declares a constant pointer to a constant integer
+  5) ~class Sample{ void function() const}~ declares that the member
+     function 'function' CANNOT modify the values of the class.
+
+Since const variables can NEVER be assigned a value, if we're working
+in a class, we need to bypass that by initializing them with the same
+concept of [[initialization lists][initialization lists]].
 
 #+NAME: const-init
 #+HEADER: :exports code
@@ -426,7 +435,7 @@ Still a bit unclear on using them; especially, the use of ~this->~ and
 how it maps to the functions. Is it getting the address of that
 function for that instance? Gotta figure that out...
 
-** TODO new and delete
+** new and delete
 :PROPERTIES:
 :SCHEDULED: <2022-11-14>
 
@@ -652,14 +661,9 @@ int main(void) {
 }
 #+END_SRC
 
-#+RESULTS: adhoc-polymorphism
-: char
-: int
-: float
-: sample
-** operator overload
+** operator overloads
 Operator Overloading allows us to augment C++ operators; to add on
-specific functionalities.
+specific functionalities (like adding two classes together).
 
 There are several ways to write operators in a mathematical
 expression: prefix, infix, postfix (~+ 1 1~, ~1 + 1~, ~1 1 +~). The
@@ -674,10 +678,172 @@ member function '+' with the argument '1'.
 Operator Overloads are declared in their respective .hpp files. The
 syntax goes like this:
 
-@timestamp minute ~3
-#+BEGIN_SRC C++
+#+NAME: declare-overloads
+#+BEGIN_SRC C++ :noweb yes
 class Integer {
-  Integer & operator=(Integer const & rhs);
-  Integer operator+(Integer const & rhs) const;
+  public:
+    Integer(int const n);
+    ~Integer(void);
+    int getValue(void) const;
+    Integer & operator=(Integer const & rhs);
+    Integer operator+(Integer const & rhs) const;
+  private:
+    int _n;
 };
+
+std::ostream & operator<<(std::ostream & o, Integer const & rhs);
+#+END_SRC
+
+Some syntax explanations:
+  1) The 'operator' keyword and its respective symbol (+-=...) is used
+     to declare operator overload functions.
+  2) 'rhs' stands for 'right hand side' ('lhs', 'left hand side') of
+     the operation. As in, (lhs) 1 + 1 (rhs).
+  3) The '+' operator overload function is const because it never
+     modifies the instance; e.g. the 1s in '1 + 1' are never modified,
+     they return something)
+  4) the '=' operator overload function is !const because it modifies
+     the instance's value; i.e., it assigns something new to it.
+  5) the '=' operator overload function must return a reference to
+     itself to accomodate assignation chaining (~a = b = c = d;~).
+  6) the '+' operator overload function returns a copy of itself.
+
+This is how they would be implemented:
+#+NAME: define-overloads
+#+BEGIN_SRC C++ :noweb yes
+Integer::Integer(int const n) : _n(n) {}
+Integer::~Integer() {}
+
+int Integer::getValue(void) const {
+  return (this->_n);
+}
+
+Integer & Integer::operator=(Integer const & rhs) {
+  this->_n = rhs.getValue();
+  return (*this);
+}
+
+Integer Integer::operator+(Integer const & rhs) const {
+  return (Integer(this->_n + rhs.getValue()));
+}
+
+std::ostream & operator<<(std::ostream & o, Integer const & rhs) {
+  o << rhs.getValue();
+  return (o);
+}
+#+END_SRC
+
+The stream redirection overload cannot use member functions, since it
+cannot modify the std::ostream class (how come?). Therefore, note that
+the declaration of the '<<' overload is outside the class definition,
+and that there is no ~Integer::~ in the definition.
+
+#+NAME: main-overload
+#+BEGIN_SRC C++ :noweb yes :results output
+#include <iostream>
+
+<<declare-overloads>>
+<<define-overloads>>
+
+int main(void) {
+  Integer x(30);
+  Integer y(10);
+  Integer z(0);
+
+  std::cout << "value of x: " << x << std::endl;
+  std::cout << "value of y: " << y << std::endl;
+  y = Integer(12);
+  std::cout << "newvalue of y: " << y << std::endl;
+  std::cout << "value of z: " << z << std::endl;
+  z = x + y;
+  std::cout << "newvalue of z: " << z << std::endl;
+}
+#+END_SRC
+
+BEWARE! There are a few rules to maintain conceptual clarity when
+writing operator overloads:
+  1) it should feel natural
+  2) didn't understand the video... well... too bad.
+  3) DON'T USE THEM! There are better ways of implementing the same behavior.
+
+** canonical form
+The canonical form is a norm for writing classes; it is merely for
+clarity and consistency. A canonical form contains, at least:
+  1) a default constructor
+  2) a copy constructor (a constructor that takes another instance to
+     become a copy of it).
+  3) a '=' operator overload.
+  4) a default destructor.
+  5) a virtual destructor (to be define later)
+
+As optional, but useful features, think of implementing:
+  1) the stream redirection '<<' operator overload
+  2) something that serializes your class into a string (like for a
+     json object)
+
+#+NAME: canonical-form-define
+#+BEGIN_SRC C++ :noweb yes
+#include <iostream>
+class Sample {
+  public:
+    Sample(void);    // default constructor
+    Sample(int const n);
+    Sample(Sample const & src);    // copy constructor
+    ~Sample(void);    // default destructor
+
+    Sample & operator=(Sample const & rhs);    // '=' overload
+    int getValue(void) const;
+  private:
+    int _value;
+};
+
+std::ostream & operator<<(std::ostream & o, Sample const & i);    // optional stream redirection
+#+END_SRC
+
+#+NAME: canonical-form-declare
+#+BEGIN_SRC C++ :noweb yes
+Sample::Sample(void) : _value(0) {std::cout << "default constr." << std::endl;}
+Sample::Sample(int const n) : _value(n) {std::cout << "parametric constr." << std::endl;}
+Sample::Sample(Sample const & src) {
+  std::cout << "copy constr" << std::endl;
+  *this = src;
+  return ;
+}
+
+Sample::~Sample(void) {std::cout << "default destr." << std::endl;}
+
+int Sample::getValue(void) const {return (this->_value);}
+
+Sample & Sample::operator=(Sample const & rhs) {
+  std::cout << "= operator" << std::endl;
+  if (this != &rhs)
+    this->_value = rhs.getValue();
+  return (*this);
+}
+std::ostream & operator<<(std::ostream & o, Sample const & i) {
+  o << "stream redir. value is: " << i.getValue() << std::endl;
+  return (o);
+}
+#+END_SRC
+
+#+RESULTS: canonical-form-declare
+
+#+NAME: canonical-main
+#+BEGIN_SRC C++ :noweb yes :results output
+<<canonical-form-define>>
+<<canonical-form-declare>>
+
+int main(void) {
+  Sample instance1;
+  Sample instance2(42);
+  Sample instance3(instance1);
+
+  std::cout << instance1 << std::endl;
+  std::cout << instance2 << std::endl;
+  std::cout << instance3 << std::endl;
+
+  instance3 = instance2;
+  std::cout << instance3 << std::endl;
+  return (0);
+}
 #+END_SRC
