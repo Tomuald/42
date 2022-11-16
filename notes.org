@@ -227,6 +227,16 @@ We snuck in a const somewhere in the .hpp that might seem unusual:
 ~void bar(void) const~. This const applies to the function itself, and
 means that NOWHERE in it's body will there be any type of assignation
 to the members attributes of the class (no ~this->a = 42~, etc).
+** static keyword
+The static keyword in C++ can be found in a few places:
+  1) as a ~static <type> var~ outside of a class. i.e., that it gets
+     allocated memory for the lifetime of the program. Just like in C,
+     this variable persists through function calls.
+  2) as a ~static <type> var~ inside of a class. i.e., they are init'd
+     once, and are allocated memory in static storage (!contiguous to
+     the class); each instance share the same memory location, and
+     value.
+  3) as static member variables... Come back to this later.
 ** visibility (public vs private)
 public vs private keywords restrain which attributes/functions are
 accessible from within and outside the class. Private attrs/fcts are

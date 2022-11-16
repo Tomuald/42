@@ -1,0 +1,24 @@
+NAME	=	program
+
+SRCS	=	Fixed.cpp
+
+OBJS	=	${SRCS:.cpp=.o}
+
+CFLAGS	=	-Wall -Wextra -Werror -std=c++98
+
+CC		=	g++
+
+RM		=	rm -Rf
+
+all:		${NAME}
+
+${NAME}:	${SRCS} main.cpp Fixed.hpp
+			${CC} ${CFLAGS} main.cpp ${SRCS} -o ${NAME}
+
+clean:
+			${RM} ${OBJS}
+
+fclean:		clean
+			${RM} ${NAME}
+
+re:			fclean all
