@@ -237,7 +237,7 @@ The static keyword in C++ can be found in a few places:
      the class); each instance share the same memory location, and
      value.
   3) as static member variables... Come back to this later.
-** visibility (public vs private)
+** visibility (public vs private vs protected)
 public vs private keywords restrain which attributes/functions are
 accessible from within and outside the class. Private attrs/fcts are
 INnaccesible from outside the class; whereas public ones can be
@@ -250,17 +250,20 @@ highlight private attributes. Its purpose is to make the code easier
 to read, and understand at a glance, which is private, which is
 public.
 
+The protected keyword allows an inheriting class to access the
+designated variables and functions.
+
 #+NAME: visibility
 #+HEADER: :exports code
 #+HEADER: :main no :noweb yes
 #+BEGIN_SRC C++
-class Sample
-{
-private:
-  const int i;
-public:
-  Sample(void);
-  ~Sample(void);
+class Sample {
+  private:
+    std::string name; // only accessible from a Sample object
+  protected:
+    std::string age; // accessible from a Sample object or a derived object
+  public:
+    void samplify(void) const; // accessible from anywhere
 };
 #+END_SRC
 ** accessors
@@ -478,7 +481,13 @@ IMPOSSIBLE to initialize values at construction. Therefore, you must
 find a way around that.
 
 ** references
-Somewhat similar to pointers.
+Somewhat similar to pointers, in the sense that it is
+pass-by-reference (instead of pass-by-value). Generally, in C++, you
+use references when you can, and pointers when you need to. A few
+guidelines:
+  1) if you want to change the object passed, call by reference or use a pointer; e.g., ~void f(int & i) || void f(int * i)~
+  2) if you don't want to change the object and it is big, call by const reference; e.g., ~void f(const & i)~
+  3) otherwise, call by value; e.g. ~void f(int i)~
 
 A reference is a const pointer that is always dereferenced and is
 never NULL. The reference is not a copy or a pointer; it IS the
@@ -878,3 +887,65 @@ int main(void) {
   return (0);
 }
 #+END_SRC
+** inheritance
+Basically lets you abstract behaviours of a class, and use them in
+other classes. This lets you cut down on the amount of redundancy, at
+the cost of complexity. Try to limit inheritance to 2 levels.
+
+#+NAME: inheritance-declare
+#+BEGIN_SRC C++
+#+END_SRC
+
+#+NAME: inheritance-define
+#+BEGIN_SRC C++ :results output
+#include <string>
+
+class Animal {
+  private:
+    int _numOfLegs;
+  public:
+    Animal();
+    Animal(Animal const &);
+    Animal & operator=(Animal const &);
+    ~Animal(void);
+
+    void run(int distance);
+};
+
+class Cat : public Animal {
+  public:
+    Cat(void);
+    Cat(Cat const &);
+    Cat & operator=(Cat const &);
+    ~Cat();
+
+    void scornSomeone(std::string const & msg);
+};
+
+int main(void) {
+  Cat cat;
+
+  cat.scornSomeone("Laaaaaaame!");
+}
+#+END_SRC
+
+You can also override functions from the parent class by defining the
+same function in the child.
+
+When declaring a class that inherits from another, you must specify
+the type of encapsulation. In the example above, it is ~public~, but
+you'll find two others:
+1) *public inheritance* makes public members of the base class public in
+   the derived class, and the protected members of the base class
+   remain protected in the derived class.
+2) *protected inheritance* makes the public and protected members of the
+   base class protected in the derived class.
+3) *private inheritance* makes the public and protected members of the
+   base class private in the derived class.
+
+
+
+** TODO Stuff to learn
+1) constructors and destructors for parent / children
+2) initializing classes with inheritance
+#+RESULTS: inheritance-basics
