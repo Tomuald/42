@@ -776,6 +776,27 @@ writing operator overloads:
   2) didn't understand the video... well... too bad.
   3) DON'T USE THEM! There are better ways of implementing the same behavior.
 
+You can also overload increment/decrement operators. The syntax is
+weird and arbitrary: for postfix increment/decrement, you must pass an
+int to the overloading function. e.g.:
+#+NAME: incr-decr-overloads
+#+BEGIN_SRC C++
+// prefix incr
+Sample & Sample::operator++(void) {
+  this->_value++;
+  return (*this);
+}
+
+// postfix decr
+Sample Sample::operator--(int) {
+  Sample tmp;
+
+  tmp = *this;
+  --*this;
+  return (tmp);
+}
+#+END_SRC
+
 ** canonical form
 The canonical form is a norm for writing classes; it is merely for
 clarity and consistency. A canonical form contains, at least:
