@@ -884,11 +884,7 @@ Basically lets you abstract behaviours of a class, and use them in
 other classes. This lets you cut down on the amount of redundancy, at
 the cost of complexity. Try to limit inheritance to 2 levels.
 
-#+NAME: inheritance-declare
-#+BEGIN_SRC C++
-#+END_SRC
-
-#+NAME: inheritance-define
+#+NAME: inheritance
 #+BEGIN_SRC C++ :results output
 #include <string>
 
@@ -925,8 +921,10 @@ You can also override functions from the parent class by defining the
 same function in the child.
 
 When declaring a class that inherits from another, you must specify
-the type of encapsulation. In the example above, it is ~public~, but
-you'll find two others:
+the type of encapsulation. All the member of the base class are part
+of the derived class. However, the derived class can only access
+members that are public or protected. In the example above, it is
+~public~, but you'll find two others:
 1) *public inheritance* makes public members of the base class public in
    the derived class, and the protected members of the base class
    remain protected in the derived class.
@@ -935,7 +933,7 @@ you'll find two others:
 3) *private inheritance* makes the public and protected members of the
    base class private in the derived class.
 
-*** TODO Stuff to learn
-1) constructors and destructors for parent / children
-2) initializing classes with inheritance
-#+RESULTS: inheritance-basics
+When a derived class is called, its base class is constructed first,
+then the derived instance is constructed. When a derived class is
+destroyed, the derived class is destroyed first, then its parent
+class.
