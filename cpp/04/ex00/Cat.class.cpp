@@ -1,17 +1,30 @@
 #include "Cat.class.hpp"
 
-Cat::Cat(void) {}
-Cat::Cat(Cat const & src) {*this = src;}
-Cat::~Cat(void) {}
+Cat::Cat(void) {
+  this->type = "Cat";
+  std::cout << this->type << " default constructor" << std::endl;
+}
+
+Cat::Cat(Cat const & src) : Animal(src) {
+  *this = src;
+  std::cout << this->type << "copy constructor" << std::endl;
+}
+Cat::~Cat(void) {
+  std::cout << "Cat destructor" << std::endl;
+}
 
 Cat & Cat::operator=(Cat const & rhs) {
   if (this != &rhs) {
-    // ...
+    this->type = rhs.type;
   }
   return (*this);
 }
 
 std::ostream & operator<<(std::ostream & o, Cat const & i) {
-  o << i.<PROPERTY>();
+  o << i.getType();
   return (o);
+}
+
+void Cat::makeSound(void) const {
+  std::cout << "Cat Sound. Amazing." << std::endl;
 }

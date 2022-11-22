@@ -1,8 +1,12 @@
 NAME	=	program
 
-HEAD	=	ClapTrap.h
+HEAD	=	Animal.class.hpp 	\
+			Cat.class.hpp		\
+			Dog.class.hpp
 
-SRCS	=	ClapTrap.cpp
+SRCS	=	Animal.class.cpp	\
+			Cat.class.cpp		\
+			Dog.class.cpp
 
 OBJS	=	${SRCS:.cpp=.o}
 
