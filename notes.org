@@ -625,6 +625,11 @@ int main(void) {
   }
 }
 #+END_SRC
+
+#+RESULTS: switch-statements
+| Case | 1! |
+| Case | 2! |
+
 ** adhoc polymorphism
 adhoc polymorphism (aka function overloading) is a principle in C++
 that allows us to use the same name for functions that take different
@@ -937,3 +942,86 @@ When a derived class is called, its base class is constructed first,
 then the derived instance is constructed. When a derived class is
 destroyed, the derived class is destroyed first, then its parent
 class.
+** subtype polymorphism
+Subtype polymorphism is basically the same thing as inheritance; it is
+often called this, and class subtyping. It implies another logical
+concept though, that of relationships between classes.
+
+Run the ~main()~ below, you'll find that you can assign a Warrior
+class to a Character object since a Warrior IS-A Character. It does
+not work the other way around (a Character IS-NOT-ALWAYS a Warrior).
+But, initializing it like that tells the compiler to use the functions
+associated with the Character class. Obviously, this only works when
+classes are related; the Cat class has no relationship with the
+Warrior, nor the Character class, and therefore will throw an error at
+compilation.
+
+#+NAME: polymorphism-virtual
+#+BEGIN_SRC C++ :results output
+#include <string>
+#include <iostream>
+
+class Character {
+  public:
+    void sayHello(std::string const & target);
+    //virtual void sayHello(std::string const & target);
+};
+
+class Warrior : public Character {
+  public:
+    void sayHello(std::string const & target);
+    //virtual void sayHello(std::string const & target);
+};
+
+class Cat {
+  // ...
+};
+
+void Character::sayHello(std::string const & target) {
+  std::cout << "Good day, " << target << " !" << std::endl;
+}
+
+void Warrior::sayHello(std::string const & target) {
+  std::cout << "Go screw yourself, " << target << std::endl;
+}
+
+int main(void) {
+  Character *a = new Character();
+  Character *b = new Warrior();
+  Warrior *c = new Warrior();
+  Warrior *d = new Warrior();
+  //Character *e = new Cat();
+
+  a->sayHello("World");
+  b->sayHello("Buttface");
+  c->sayHello("Wormguts");
+  d->sayHello("Water Buffalo");
+  delete a, b, c, d;
+}
+#+END_SRC
+
+#+RESULTS: polymorphism-virtual
+: Good day, World !
+: Good day, Buttface !
+: Go screw yourself, Wormguts
+: Go screw yourself, Water Buffalo
+
+There is a way to get around that though, and it is to use the
+~virtual~ keyword on a member function. Change the comments in the
+code above to see how this works.
+
+N.B.: 'methods' are virtual member functions.
+** abstract classes and interfaces
+Abstract classes are classes that cannot be instanciated directly. As
+a norm, abstract class names are prefixed with an '*A*', as in ~class
+ACharacter~.
+
+Often you'll find 'pure methods' in abstract classes. These are
+denoted by ending the function definition with ~public:
+aFunction(void) = 0;~. This means that every subclass MUST define this
+function, but it is NOT defined in the abstract class.
+
+An interface is an abstract class that contains ONLY pure methods, and
+has no attributes. Their names are prefixed with '*I*'. They are used
+to conceptualize a class, that can be instantiated with a subclass. It
+kinda gives a blueprint to build more complex classes with.
