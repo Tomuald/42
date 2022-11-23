@@ -9,11 +9,11 @@ class Animal {
   public:
     Animal(void);
     Animal(const Animal & src);
-    ~Animal(void);
+    virtual ~Animal(void);
 
     Animal & operator=(Animal const & rhs);
     std::string getType(void) const;
-    void makeSound(void) const;
+    virtual void makeSound(void) const;
 };
 
 std::ostream & operator<<(std::ostream & o, Animal const & i);

@@ -1,12 +1,16 @@
 NAME	=	program
 
-HEAD	=	Animal.class.hpp 	\
-			Cat.class.hpp		\
-			Dog.class.hpp
+HEAD	=	Animal.class.hpp 		\
+			Cat.class.hpp			\
+			Dog.class.hpp			\
+			WrongAnimal.class.hpp	\
+			WrongCat.class.hpp
 
-SRCS	=	Animal.class.cpp	\
-			Cat.class.cpp		\
-			Dog.class.cpp
+SRCS	=	Animal.class.cpp		\
+			Cat.class.cpp			\
+			Dog.class.cpp			\
+			WrongAnimal.class.cpp	\
+			WrongCat.class.cpp
 
 OBJS	=	${SRCS:.cpp=.o}
 

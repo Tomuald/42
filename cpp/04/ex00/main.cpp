@@ -2,14 +2,25 @@
 #include "Animal.class.hpp"
 #include "Cat.class.hpp"
 #include "Dog.class.hpp"
+#include "WrongAnimal.class.hpp"
+#include "WrongCat.class.hpp"
 
 int main(void) {
-  Animal a1;
-  Cat c1;
-  Dog d1;
+  const Animal * meta = new Animal();
+  const Animal * j = new Dog();
+  const Animal * i = new Cat();
+  const WrongAnimal * w = new WrongAnimal();
+  const WrongAnimal * c = new WrongCat();
 
-  a1.makeSound();
-  c1.makeSound();
-  d1.makeSound();
+  meta->makeSound();
+  j->makeSound();
+  i->makeSound();
+  w->makeSound();
+  c->makeSound();
+  delete meta;
+  delete i;
+  delete j;
+  delete w;
+  delete c;
   return (0);
 }

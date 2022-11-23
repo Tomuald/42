@@ -956,6 +956,8 @@ classes are related; the Cat class has no relationship with the
 Warrior, nor the Character class, and therefore will throw an error at
 compilation.
 
+When classes are meant to be manipulated polymorphically, always make the base class's destructor virtual. What about the derived classes'?
+
 #+NAME: polymorphism-virtual
 #+BEGIN_SRC C++ :results output
 #include <string>
