@@ -1027,3 +1027,9 @@ An interface is an abstract class that contains ONLY pure methods, and
 has no attributes. Their names are prefixed with '*I*'. They are used
 to conceptualize a class, that can be instantiated with a subclass. It
 kinda gives a blueprint to build more complex classes with.
+** deep vs shallow copies
+A deep copy creates a new object in memory, while a shallow copy
+references the original object. Make sure to use whichever one is
+appropriate for the case you're working on; e.g.: if you're gonna
+modify either of the objects, you'll want a deep copy, if not, stick
+to a shallow copy.
