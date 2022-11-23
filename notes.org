@@ -1019,7 +1019,7 @@ a norm, abstract class names are prefixed with an '*A*', as in ~class
 ACharacter~.
 
 Often you'll find 'pure methods' in abstract classes. These are
-denoted by ending the function definition with ~public:
+denoted by ending the function definition with ~public: virtual
 aFunction(void) = 0;~. This means that every subclass MUST define this
 function, but it is NOT defined in the abstract class.
 
