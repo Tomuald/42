@@ -1033,3 +1033,117 @@ references the original object. Make sure to use whichever one is
 appropriate for the case you're working on; e.g.: if you're gonna
 modify either of the objects, you'll want a deep copy, if not, stick
 to a shallow copy.
+** exceptions
+Errors in C++ are caught with ~try~ and ~catch~ blocks. Basically, you
+try some code in the ~try~ block, and ~throw~ an exception in the if
+it fails, then deal with the exception (specific or generic) in the
+following ~catch~ blocks.
+
+As a general rule, throwing an exception if ressource demanding. Use
+them sparingly, and only when absolutely necessary; consider if a
+simpler method might be enough (returning a bool, for example);
+
+#+NAME: exceptions-1
+#+BEGIN_SRC C++
+#include <stdexcept>
+#include <iostream>
+
+void exceptionOne(void) {
+  int a = 0;
+
+  try {
+    if (a != 1) {
+      throw std::exception();
+    }
+    else {
+      // run some code
+    }
+  }
+  catch (std::exception e) {
+    std::cout << e.what() << std::endl;
+  }
+}
+
+int main(void) {
+  exceptionOne();
+}
+#+END_SRC
+
+You can also have ~try~ and ~catch~ blocks in different functions,
+like in the example below:
+
+#+NAME: exceptions-2
+#+BEGIN_SRC C++
+#include <stdexcept>
+#include <iostream>
+
+void exceptionTwo(void) {
+  int a = 0;
+  if (a != 1) {
+    throw std::exception();
+  }
+  else {
+    // run some code
+  }
+}
+
+int main(void) {
+  try {
+    exceptionTwo();
+  }
+  catch (std::exception & e) {
+    std::cout << e.what() << std::endl;
+  }
+}
+#+END_SRC
+
+We can also define our own exceptions by inheriting from the
+std::exception class:
+
+#+NAME: exception-custom
+#+BEGIN_SRC C++ :results output
+#include <stdexcept>
+#include <iostream>
+
+void smash(int i);
+
+class CustomException : public std::exception {
+    public:
+      virtual const char * what() const throw() {
+        return ("Problem exists between keyboard and chair.");
+      }
+};
+
+void exceptionThree(int i) {
+  try {
+    smash(i);
+  }
+  catch (CustomException & e) {
+    std::cout << e.what() << std::endl;
+  }
+  catch (std::exception & e) {
+    std::cout << e.what() << std::endl;
+  }
+}
+
+void smash(int i) {
+  if (i == 1) {
+    throw CustomException();
+  }
+  else if (i == 2) {
+    throw std::exception();
+  }
+}
+
+int main(void) {
+  exceptionThree(1);
+  exceptionThree(2);
+}
+#+END_SRC
+
+In the example above, the ~throw()~ specifier allows you to specify
+which exceptions can be thrown by the attached function. It has been
+deprecated in C++11.
+
+One can also define exception classes within a nested class. You can
+access them with: ~<CLASS_NAME>::<EXCEPTION_NAME>~.
