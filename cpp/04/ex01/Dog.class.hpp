@@ -2,9 +2,12 @@
 # define DOG_CLASS_HPP_
 
 # include "Animal.class.hpp"
+# include "Brain.class.hpp"
 # include <ostream>
 
 class Dog : public Animal {
+  private:
+    Brain * _brain;
   public:
     Dog(void);
     Dog(const Dog & src);
