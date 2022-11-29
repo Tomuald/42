@@ -2,20 +2,23 @@
 #include <fstream>
 #include <string>
 
-std::string replaceLine(std::string line, std::string s1, std::string s2) {
-  size_t pos;
-  std::string newstring;
+void replaceOcc(std::ifstream &ifs, std::ofstream &ofs, std::string s1, std::string s2) {
+  std::string line;
+  size_t pos = 0;
 
-  pos = line.find(s1);
-  if (pos == std::string::npos)
-    return (line);
-  else {
-    while (pos != std::string::npos) {
-      newstring = line.erase(pos, s1.size()).insert(pos, s2);
-      pos = line.find(s1);
-    }
+  if (s1.empty()) {
+    std::cerr << "s1 is empty. Cannot replace." << std::endl;
+    return ;
   }
-  return (newstring);
+  while (std::getline(ifs, line, '\0')) {
+    pos = line.find(s1);
+    while (pos != std::string::npos) {
+      line.erase(pos, s1.size());
+      line.insert(pos, s2);
+      pos = line.find(s1, pos + s2.size());
+    }
+    ofs << line;
+  }
 }
 
 int main(int argc, char **argv) {
@@ -29,9 +32,7 @@ int main(int argc, char **argv) {
   ifs.open(argv[1]);
   ofs.open((std::string)argv[1] + ".replace");
   if (ifs.is_open() && ofs.is_open()) {
-    std::string line;
-    while (std::getline(ifs, line))
-      ofs << replaceLine(line, argv[2], argv[3]) << std::endl;
+    replaceOcc(ifs, ofs, (std::string)argv[2], (std::string)argv[3]);
     ifs.close();
     ofs.close();
   }

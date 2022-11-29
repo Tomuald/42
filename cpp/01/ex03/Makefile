@@ -8,7 +8,7 @@ OBJS	=	${SRCS:.cpp=.o}
 
 CFLAGS	=	-Wall -Wextra -Werror -std=c++98
 
-CC		=	g++
+CC		=	c++
 
 RM		=	rm -Rf
 
