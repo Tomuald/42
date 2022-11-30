@@ -32,6 +32,9 @@ int main(void) {
   std::cout << "pre incremented a: " << ++a << std::endl;
   b++;
   std::cout << "post incremented b: " << b << std::endl;
+  std::cout << "pre decremented a: " << --a << std::endl;
+  b--;
+  std::cout << "post incremented b: " << b << std::endl;
   std::cout << "---min & max---" << std::endl;
   std::cout << "max: " << Fixed::max(a, b) << std::endl;
   std::cout << "min: " << Fixed::min(a, b) << std::endl;

@@ -1,8 +1,6 @@
 #include "Fixed.hpp"
 #include <cmath>
 
-//------------CONSTRUCTORS------------------
-
 Fixed::Fixed (void) : _n(0) {
   std::cout << "constr." << std::endl;
 }
@@ -20,11 +18,7 @@ Fixed::Fixed(Fixed const & src) {
   return ;
 }
 
-//------------DESTRUCTORS---------------------
-
 Fixed::~Fixed(void) {std::cout << "destr." << std::endl;}
-
-//------------------METHODS------------------------
 
 int Fixed::getRawBits(void) const {return (this->_n);}
 void Fixed::setRawBits(int const raw) {
@@ -38,8 +32,6 @@ float Fixed::toFloat(void) const {
 int Fixed::toInt(void) const {
   return (this->_n >> this->_nbits);
 }
-
-//---------------OVERLOADS-------------------------
 
 Fixed & Fixed::operator=(Fixed const & rhs) {
   if (this != &rhs)

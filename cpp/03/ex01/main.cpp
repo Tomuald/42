@@ -17,5 +17,7 @@ int main(void) {
   scavOne.takeDamage(150);
   scavOne.attack(scavTwo.getName());
   scavOne.guardGate();
+  scavOne.beRepaired(10);
+  std::cout << "This is the intended functionality. The msg gets called from the parent class." << std::endl;
   return (0);
 }
