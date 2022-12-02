@@ -7,10 +7,10 @@ class Bureaucrat;
 
 class Form {
   private:
-    std::string _name;
+    std::string const & _name;
     bool _isSigned;
-    int _signGrade;
-    int _execGrade;
+    int const _signGrade;
+    int const _execGrade;
 
   public:
   // ========== Constructors & Destructors ===========================
@@ -18,14 +18,14 @@ class Form {
     Form(const Form & src);
     ~Form(void);
   // ========== Functions ============================================
-    std::string const & getName(void) const;
-    bool getSignState(void) const;
-    int getSignGrade(void) const;
-    int getExecGrade(void) const;
+    const std::string & getName(void) const;
+    bool const & getSignState(void) const;
+    int const & getSignGrade(void) const;
+    int const & getExecGrade(void) const;
 
     void beSigned(Bureaucrat & b);
   // ========== Overloads ============================================
-    Form & operator=(Form const & rhs);
+    Form const & operator=(Form const & rhs);
   // ========== Exceptions ===========================================
     class GradeTooHighException : public std::exception {
       public:

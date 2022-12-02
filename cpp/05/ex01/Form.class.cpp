@@ -1,46 +1,50 @@
 #include "Form.class.hpp"
 
 // ========== Constructors & Destructors ===========================
-Form::Form(std::string const & name, int signGrade, int execGrade) : _name(name), _signGrade(signGrade), _execGrade(execGrade) {}
-Form::Form(Form const & src) {*this = src;}
+Form::Form(std::string const & name, int const signGrade, int const execGrade) : _name(name), _signGrade(signGrade), _execGrade(execGrade) {
+  this->_isSigned = false;
+}
+
+Form::Form(Form const & src) : _name(src._name), _signGrade(src._signGrade), _execGrade(src._execGrade) {*this = src;}
 Form::~Form(void) {}
 
 // ========== Overloads ============================================
-Form & Form::operator=(Form const & rhs) {
+Form const & Form::operator=(const Form & rhs) {
   if (this != &rhs) {
-    this->_name = rhs.getName();
-    this->_signGrade = rhs.getSignGrade();
-    this->_execGrade = rhs.getExecGrade();
-    this->_isSigned = rhs.getSignState();
+    this->_isSigned = rhs._isSigned;
   }
   return (*this);
 }
 
 // ========== Functions ============================================
-std::string const & Form::getName(void) const {
+const std::string & Form::getName(void) const {
   return (this->_name);
 }
 
-bool Form::getSignState(void) const {
+bool const & Form::getSignState(void) const {
   return (this->_isSigned);
 }
 
-int Form::getSignGrade(void) const {
+int const & Form::getSignGrade(void) const {
   return (this->_signGrade);
 }
 
-int Form::getExecGrade(void) const {
+int const & Form::getExecGrade(void) const {
   return (this->_execGrade);
 }
 
 void Form::beSigned(Bureaucrat & b) {
   if (this->getSignState() == true) {
+    std::cout << b.getName() << " could not sign " << this->getName() << " because form already signed" << std::endl;
     throw Form::AlreadySignedException();
   } else if (b.getGrade() <= this->getSignGrade() && b.getGrade() > 0) {
     this->_isSigned = true;
+    std::cout << b.getName() << " signed " << this->getName() << std::endl;
   } else if (b.getGrade() < 1) {
+    std::cout << b.getName() << " could not sign " << this->getName() << " because grade too high" << std::endl;
     throw Form::GradeTooHighException();
   } else {
+    std::cout << b.getName() << " could not sign " << this->getName() << " because grade too low" << std::endl;
     throw Form::GradeTooLowException();
   }
 }
