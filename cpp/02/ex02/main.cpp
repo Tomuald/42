@@ -6,6 +6,7 @@ int main(void) {
   Fixed c(42.42f);
   Fixed d(b);
   Fixed const e(Fixed (5.05f) * Fixed(2));
+  Fixed t;
 
   a = Fixed(1234.4321f);
   std::cout << "---base numbers---" << std::endl;

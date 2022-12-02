@@ -1,19 +1,21 @@
-NAME	=	megaphone
+NAME	=	program
 
-SRCS	=	megaphone.cpp
+HEAD	=	Bureaucrat.class.hpp
+
+SRCS	=	Bureaucrat.class.cpp
 
 OBJS	=	${SRCS:.cpp=.o}
 
 CFLAGS	=	-Wall -Wextra -Werror -std=c++98
 
-CC		=	g++
+CC		=	c++
 
 RM		=	rm -Rf
 
 all:		${NAME}
 
-${NAME}:
-			${CC} ${CFLAGS} ${SRCS} -o ${NAME}
+${NAME}:	${SRCS} main.cpp
+			${CC} ${CFLAGS} main.cpp ${SRCS} -o ${NAME}
 
 clean:
 			${RM} ${OBJS}
