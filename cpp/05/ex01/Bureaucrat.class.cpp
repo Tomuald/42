@@ -1,4 +1,5 @@
 #include "Bureaucrat.class.hpp"
+#include "Form.class.hpp"
 
 //========== Constructors & Destructors ============================
 Bureaucrat::Bureaucrat(void) : _name("NaN"), _grade(150) {}
@@ -65,6 +66,20 @@ void Bureaucrat::downGrade(void) {
     std::cout << e.what() << std::endl;
   }
   catch (Bureaucrat::GradeTooHighException & e) {
+    std::cout << e.what() << std::endl;
+  }
+}
+
+void Bureaucrat::signForm(Form & form) {
+  try {
+    form.beSigned(*this);
+  } catch (Form::AlreadySignedException & e) {
+    std::cout << e.what() << std::endl;
+  } catch (Form::GradeTooHighException & e) {
+    std::cout << e.what() << std::endl;
+  } catch (Form::GradeTooLowException & e) {
+    std::cout << e.what() << std::endl;
+  } catch (std::exception & e) {
     std::cout << e.what() << std::endl;
   }
 }

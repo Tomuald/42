@@ -1,8 +1,10 @@
 NAME	=	program
 
-HEAD	=	Bureaucrat.class.hpp
+HEAD	=	Bureaucrat.class.hpp \
+			Form.class.hpp
 
-SRCS	=	Bureaucrat.class.cpp
+SRCS	=	Bureaucrat.class.cpp \
+			Form.class.cpp
 
 OBJS	=	${SRCS:.cpp=.o}
 

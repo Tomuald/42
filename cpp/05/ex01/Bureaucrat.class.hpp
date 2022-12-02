@@ -3,6 +3,8 @@
 
 #include <iostream>
 #include <stdexcept>
+class Form;
+#include "Form.class.hpp"
 
 class Bureaucrat {
   private:
@@ -22,6 +24,7 @@ class Bureaucrat {
     void setGrade(int grade);
     void addGrade(void);
     void downGrade(void);
+    void signForm(Form & form);
   //========== Exceptions  ===========================================
     class GradeTooHighException : public std::exception {
       public:

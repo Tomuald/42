@@ -2,22 +2,23 @@
 # define FORM_CLASS_HPP_
 
 #include <iostream>
+class Bureaucrat;
 #include "Bureaucrat.class.hpp"
 
 class Form {
   private:
-    std::string const _name;
-    bool isSigned;
-    int signGrade;
-    int execGrade;
+    std::string _name;
+    bool _isSigned;
+    int _signGrade;
+    int _execGrade;
 
   public:
   // ========== Constructors & Destructors ===========================
-    Form(void);
+    Form(std::string const & name, const int signGrade, const int execGrade);
     Form(const Form & src);
     ~Form(void);
   // ========== Functions ============================================
-    std::string const getName(void) const;
+    std::string const & getName(void) const;
     bool getSignState(void) const;
     int getSignGrade(void) const;
     int getExecGrade(void) const;
@@ -25,6 +26,19 @@ class Form {
     void beSigned(Bureaucrat & b);
   // ========== Overloads ============================================
     Form & operator=(Form const & rhs);
+  // ========== Exceptions ===========================================
+    class GradeTooHighException : public std::exception {
+      public:
+        virtual const char * what() const throw();
+    };
+    class GradeTooLowException : public std::exception {
+      public:
+        virtual const char * what() const throw();
+    };
+    class AlreadySignedException : public std::exception {
+      public:
+        virtual const char * what() const throw();
+    };
 };
 
 std::ostream & operator<<(std::ostream & o, Form const & i);
