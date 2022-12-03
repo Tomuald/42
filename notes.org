@@ -1025,7 +1025,7 @@ function, but it is NOT defined in the abstract class.
 
 An interface is an abstract class that contains ONLY pure methods, and
 has no attributes. Their names are prefixed with '*I*'. They are used
-to conceptualize a class, that can be instantiated with a subclass. It
+to conceptualize a class, which can be instantiated by a subclass. It
 kinda gives a blueprint to build more complex classes with.
 ** deep vs shallow copies
 A deep copy creates a new object in memory, while a shallow copy
