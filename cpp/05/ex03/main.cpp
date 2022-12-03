@@ -12,9 +12,12 @@ int main(int argc, char **argv) {
 
   Intern bootlicker1;
   Form * rff;
+  Bureaucrat b("PencilPusher#1", 150);
 
   rff = bootlicker1.makeForm("ShrubberyCreationForm", "Some Random Garden");
   std::cout << rff->getName() << " targets: " << rff->getTarget() << std::endl;
+  b.signForm(*rff);
+  b.executeForm(*rff);
   delete rff;
   rff = bootlicker1.makeForm("RobotomyRequestForm", "Some Random Hobo");
   std::cout << rff->getName() << " targets: " << rff->getTarget() << std::endl;
