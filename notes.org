@@ -1147,7 +1147,8 @@ deprecated in C++11.
 
 One can also define exception classes within a nested class. You can
 access them with: ~<CLASS_NAME>::<EXCEPTION_NAME>~.
-** casts & conversions
+** TODO casts & conversions
+- [ ] Redo this whole section.
 In C, you can cast variables to another type. This is great,
 sometimes, especially when you're promoting to a new variable type
 (one that has bigger storage space than the current one; nt =>
@@ -1170,8 +1171,9 @@ write for example by removing the ~const~).
 The same concept applies to classes: a child class is a more precise
 version of a parent.
 
-But in C++, we've got a few different options for casting. Firstly,
-the ~static_cast~ keyword:
+But in C++, we've got a few different options for casting.
+*** The Static Cast
+Firstly, the ~static_cast~ keyword:
 
 #+BEGIN_SRC C++ :results output
 #include <iostream>
@@ -1202,6 +1204,7 @@ int main(void) {
 }
 #+END_SRC
 
+*** The Dynamic Cast
 The ~dynamic_cast~ keyword happens at execution time. This means that
 a program might compile properly, but still fail at runtime when
 calling the dynamic cast. The dynamic cast only works in cases where
@@ -1219,7 +1222,6 @@ int main(void) {
   Child1 a;
   Parent *b = &a;
 
-  // explicit downcast
   Child1 * c = dynamic_cast<Child1 *>(b);
   if (c == NULL) {
     std::cout << "Conversion failed." << std::endl;
@@ -1236,11 +1238,83 @@ int main(void) {
 }
 #+END_SRC
 
-#+RESULTS:
-: Conversion succeeded.
-: Conversion failed.std::bad_cast
-
 Dynamic casting is useful when adding plugins to an application, and
 represented as a class. Dynamic Casting allows to verify that the
 plugin type is actually the type you're trying to use, and throw an
 error instead of crashing...Wow this is super unclear...
+
+*** The Reinterpret Cast
+The ~reinterpret_cast~ is the most permissive cast: you can
+reinterpret any address to any other address with all the consequences
+this entails.
+
+*** The Const Cast
+The ~const_cast~ allows us to transform type qualifiers. But NEVER use
+it! If you have to use it, your code probably sucks. (unless one of
+the libraries forces you to do so because it was coded like s#!±).
+
+#+BEGIN_SRC C++ :results output
+int main(void) {
+  int a = 42;
+
+  int const * b = &a; // implicit promotion, ok
+  int * c = b; // this fails
+  int * d = const_cast<int *>(b); // explicit demotion, ok
+}
+#+END_SRC
+*** Operator Typecasts
+Operator Typecasts allow you to define within your classes specific
+operators that allow you to convert implicity a class to another type.
+
+#+BEGIN_SRC C++ :results output
+#include <iostream>
+
+class Foo {
+  public:
+    Foo(float const v) : _v(v) {}
+    float getV(void) {return (this->_v);}
+    operator float() {return (this->_v);}
+    operator int() {return static_cast<int>(this->_v);}
+  private:
+    float _v;
+};
+
+int main(void) {
+  Foo a(420.042f);
+  float b = a;
+  int c = a;
+
+  std::cout << a.getV() << std::endl;
+  std::cout << b << std::endl;
+  std::cout << c << std::endl;
+}
+#+END_SRC
+
+This allows you to use the ~operator <TYPE>()~ to define how your
+class handles being cast to another type.
+** explicit keyword
+C++ allows cast to happen anywhere during the code, meaning that when
+calling a function, your compiler will look inside your class
+definition to see if it can convert (construct) it implicitly. Thus,
+you can decide when you allow implicit/explicit casts to happen.
+
+#+BEGIN_SRC C++
+class A {};
+class B {};
+
+class C {
+  public:
+    C( A const & _ ) {return;};
+    explicit C( B const & _) {return;};
+};
+
+void f(C const & _) {
+  return ;
+}
+
+int main(void) {
+  f( A() );
+  f( B() ); // implicit cast, explicit construct, fails on compile.
+  return (0);
+}
+#+END_SRC
