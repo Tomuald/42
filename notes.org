@@ -1147,3 +1147,100 @@ deprecated in C++11.
 
 One can also define exception classes within a nested class. You can
 access them with: ~<CLASS_NAME>::<EXCEPTION_NAME>~.
+** casts & conversions
+In C, you can cast variables to another type. This is great,
+sometimes, especially when you're promoting to a new variable type
+(one that has bigger storage space than the current one; nt =>
+double), but causes problems when assigning to a lesser one (double =>
+int). That's due to how they are stored in memory. That's a whole
+other subject, for now, suffice to know that it is unwise to cast to a
+smaller type, unless you're willing to lose precision (certain types
+are more precise than others).
+
+Same thing goes for pointers: demoting is hazardous, promoting is
+fine. The most general pointer type is a ~void *~ which can hold any
+type of pointer. This is called reinterpretation, which means that no
+conversion is applied when promoting or demoting a variable; the bits
+are copied as-is.
+
+You can also type cast qualifiers; meaning that you can cast ~int a~
+to ~int const *b~, and also the opposite (to make a variable read and
+write for example by removing the ~const~).
+
+The same concept applies to classes: a child class is a more precise
+version of a parent.
+
+But in C++, we've got a few different options for casting. Firstly,
+the ~static_cast~ keyword:
+
+#+BEGIN_SRC C++ :results output
+#include <iostream>
+
+int main(void) {
+  double a = 42;
+  int b = static_cast<int>(a);
+
+  std::cout << b << std::endl;
+}
+#+END_SRC
+
+The ~static_cast~ keyword can also be used with classes. This keyword
+also prevents from casting two unrelated class types as in the example
+below:
+
+#+BEGIN_SRC C++
+class Parent {};
+class Child : public Parent {};
+class Unrelated {};
+
+int main(void) {
+  Child a;
+  Parent * b = &a; // implicit upcast. OK
+  Child * c = static_cast<Child *>(b); // explicit upcast
+  Unrelated * d = static_cast<Unrelated *>(a);
+  // conversions out of hierarchy dont work
+}
+#+END_SRC
+
+The ~dynamic_cast~ keyword happens at execution time. This means that
+a program might compile properly, but still fail at runtime when
+calling the dynamic cast. The dynamic cast only works in cases where
+there is polymorphism (needs one virtual method). They also only work
+on pointers or references.
+
+#+BEGIN_SRC C++ :results output
+#include <iostream>
+
+class Parent {public:virtual ~Parent(void) {}};
+class Child1 : public Parent {};
+class Child2 : public Parent {};
+
+int main(void) {
+  Child1 a;
+  Parent *b = &a;
+
+  // explicit downcast
+  Child1 * c = dynamic_cast<Child1 *>(b);
+  if (c == NULL) {
+    std::cout << "Conversion failed." << std::endl;
+  } else {
+    std::cout << "Conversion succeeded." << std::endl;
+  }
+
+  try {
+    Child2 & d = dynamic_cast<Child2 &>(*b);
+    std::cout << "Conversion succeeded." << std::endl;
+  } catch (std::bad_cast & bc) {
+    std::cout << "Conversion failed." << bc.what() << std::endl;
+  }
+}
+#+END_SRC
+
+#+RESULTS:
+: Conversion succeeded.
+: Conversion failed.std::bad_cast
+
+Dynamic casting is useful when adding plugins to an application, and
+represented as a class. Dynamic Casting allows to verify that the
+plugin type is actually the type you're trying to use, and throw an
+error instead of crashing...Wow this is super unclear...
