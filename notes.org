@@ -1018,10 +1018,11 @@ Abstract classes are classes that cannot be instanciated directly. As
 a norm, abstract class names are prefixed with an '*A*', as in ~class
 ACharacter~.
 
-Often you'll find 'pure methods' in abstract classes. These are
-denoted by ending the function definition with ~public: virtual
-aFunction(void) = 0;~. This means that every subclass MUST define this
-function, but it is NOT defined in the abstract class.
+An abstract class has one or more 'pure virtual functions'. These are
+denoted by adding ~virtual~ keyword, and ending the function
+definition with ~public: virtual aFunction(void) = 0;~. This means
+that every subclass MUST define this function, but it is NOT defined
+in the abstract class.
 
 An interface is an abstract class that contains ONLY pure methods, and
 has no attributes. Their names are prefixed with '*I*'. They are used
@@ -1247,6 +1248,25 @@ error instead of crashing...Wow this is super unclear...
 The ~reinterpret_cast~ is the most permissive cast: you can
 reinterpret any address to any other address with all the consequences
 this entails.
+
+Basically, when you call the ~reinterpret_cast~, the cpu doesn't do
+any calculations to change the representation of the bits. Meaning
+that, when you convert an ~int *~ to a ~float *~, the new
+(dereferenced) value has nothing to do with the old value. BUT! When
+you cast it back to its original type, you get the original value.
+
+From cppreference:
+#+begin_quote
+1. A pointer can be converted to any integral type large enough to
+   hold all values of its type (e.g. to std::uintptr_t)
+2. A value of any integral or enumeration type can be converted to a
+   pointer type. A pointer converted to an integer of sufficient size
+   and back to the same pointer type is guaranteed to have its
+   original value, otherwise the resulting pointer cannot be
+   dereferenced safely (the round-trip conversion in the opposite
+   direction is not guaranteed; the same pointer may have multiple
+   integer representations)
+#+end_quote
 
 *** The Const Cast
 The ~const_cast~ allows us to transform type qualifiers. But NEVER use

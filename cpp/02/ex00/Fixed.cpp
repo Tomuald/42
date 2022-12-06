@@ -22,4 +22,3 @@ Fixed & Fixed::operator=(Fixed const & rhs) {
     this->_n = rhs.getRawBits();
   return (*this);
 }
-X

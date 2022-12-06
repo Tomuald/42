@@ -2,9 +2,9 @@
 
 ClapTrap::ClapTrap(void) {
 	this->_name = "Default";
-	this->_hitPoints = 100;
-	this->_energyPoints = 50;
-	this->_hitPoints = 20;
+	this->_hitPoints = 10;
+	this->_energyPoints = 10;
+	this->_attackDamage = 0;
 	std::cout << this->_name << " ClapTrap created def.constr." << std::endl;
 }
 

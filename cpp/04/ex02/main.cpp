@@ -9,5 +9,8 @@ int main(void) {
   const AAnimal * a = new Dog();
 
   a->makeSound();
+  delete a;
+  std::cout << "uncomment the following line to show that initialization fails." << std::endl;
+  //AAnimal test;
   return (0);
 }

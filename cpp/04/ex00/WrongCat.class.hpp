@@ -8,7 +8,7 @@ class WrongCat : public WrongAnimal {
   public:
     WrongCat(void);
     WrongCat(const WrongCat & src);
-    virtual ~WrongCat(void);
+    ~WrongCat(void);
 
     WrongCat & operator=(WrongCat const & rhs);
 

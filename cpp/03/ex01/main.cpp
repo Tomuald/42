@@ -14,6 +14,7 @@ int main(void) {
   std::cout << "C1 has: " << C1.getHP() << " hp" << std::endl;
   C1.attack(scavTwo.getName());
   scavTwo.attack(scavOne.getName());
+  std::cout << "no override on takeDamage(), so msg is from parent class." << std::endl;
   scavOne.takeDamage(150);
   scavOne.attack(scavTwo.getName());
   scavOne.guardGate();
