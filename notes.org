@@ -1255,7 +1255,7 @@ that, when you convert an ~int *~ to a ~float *~, the new
 (dereferenced) value has nothing to do with the old value. BUT! When
 you cast it back to its original type, you get the original value.
 
-From cppreference:
+From [[https://en.cppreference.com/w/cpp/language/reinterpret_cast][cppreference]]:
 #+begin_quote
 1. A pointer can be converted to any integral type large enough to
    hold all values of its type (e.g. to std::uintptr_t)
