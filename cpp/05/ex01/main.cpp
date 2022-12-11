@@ -9,7 +9,6 @@ int main(int argc, char **argv) {
   Form form1("Basic Form", 15, 1);
   Bureaucrat bob("Bob", 150);
   Form form2("Another Basic Form", 150, 150);
-  //Bureaucrat fail("Should Fail", -1);
 
   bob.signForm(form1);
   bob.signForm(form2);

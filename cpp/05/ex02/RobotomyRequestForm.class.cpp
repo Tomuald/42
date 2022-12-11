@@ -2,7 +2,7 @@
 #include <fstream>
 
 RobotomyRequestForm::RobotomyRequestForm(void) : Form::Form("RobotomyRequestForm", 72, 45), _target("null") {}
-RobotomyRequestForm::RobotomyRequestForm(std::string const & target) : Form::Form("RobotomyRequestForm", 145, 137), _target(target) {}
+RobotomyRequestForm::RobotomyRequestForm(std::string const & target) : Form::Form("RobotomyRequestForm", 72, 45), _target(target) {}
 RobotomyRequestForm::RobotomyRequestForm(RobotomyRequestForm const & src) {*this = src;}
 RobotomyRequestForm::~RobotomyRequestForm(void) {}
 
