@@ -483,8 +483,10 @@ Somewhat similar to pointers, in the sense that it is
 pass-by-reference (instead of pass-by-value). Generally, in C++, you
 use references when you can, and pointers when you need to. A few
 guidelines:
-  1) if you want to change the object passed, call by reference or use a pointer; e.g., ~void f(int & i) || void f(int * i)~
-  2) if you don't want to change the object and it is big, call by const reference; e.g., ~void f(const & i)~
+  1) if you want to change the object passed, call by reference or use
+     a pointer; e.g., ~void f(int & i) || void f(int * i)~
+  2) if you don't want to change the object and it is big, call by
+     const reference; e.g., ~void f(const & i)~
   3) otherwise, call by value; e.g. ~void f(int i)~
 
 A reference is a const pointer that is always dereferenced and is
@@ -499,6 +501,8 @@ not a pointer to the object, nor a copy of the object. It is the
 object.
 #+end_quote
 
+Use references when you want to pass-by-address instead of
+pass-by-value.
 
 #+BEGIN_SRC C++
 #include <iostream>
@@ -1338,3 +1342,268 @@ int main(void) {
   return (0);
 }
 #+END_SRC
+** templates
+Templates allow to create blueprints that can be generate by the
+compiler to complete them. This allows us to write code that contains
+'type variables'. At compilation, these type variables are 'filled in'
+with whatever you specify.
+
+Take the following ~max()~ function.
+
+#+BEGIN_SRC C++
+#include <iostream>
+
+int max(int x, int y) {
+  return (x >= y ? x : y);
+}
+#+END_SRC
+
+To turn it into a template function, add the ~template~ keyword, and
+the name of the type before the function definition. Now, you can pass
+variables of any type (including classes and other objects!) to the
+function.
+
+#+NAME: fct-template
+#+BEGIN_SRC C++ :noweb yes
+template< typename T > // for multiple types: < typename T, typename Y, ... >
+T max(T x, T y) {
+  return (x >= y ? x : y);
+}
+#+END_SRC
+
+When passing voluminous classes, consider using references instead of
+values, e.g.: ~T max(T & x, T & y) {...}~. AND! if you're not modyfing
+any values remember to make the references ~const~! (~T const & max(T
+const & x, T const & y) {...}~).
+
+#+BEGIN_SRC C++ :noweb yes :flags -Wall -Wextra -Werror -std=c++98 :results output
+#include <iostream>
+<<fct-template>>
+
+int main(void) {
+  int a = 21;
+  int b = 42;
+
+  // explicit instanciation
+  std::cout << "Max of a and b: " << max<int>(a, b) << std::endl;
+  // implicit instanciation
+  std::cout << "Max of a and b: " << max(a, b) << std::endl;
+
+  float c = 21.42f;
+  float d = 42.21f;
+
+  // explicit instanciation
+  std::cout << "Max of c and d: " << max<float>(c, d) << std::endl;
+  // implicit instanciation
+  std::cout << "Max of c and d: " << max(c, d) << std::endl;
+}
+#+END_SRC
+
+We can also write template classes:
+
+#+BEGIN_SRC C++
+
+#include <iostream>
+template<typename T >
+class List {
+  public:
+    List<T>(T const & content) {}
+    List<T>(List<T> const & list) {}
+    ~List<T>(void) {}
+  private:
+    T _content;
+    List<T> * _next;
+};
+
+int main(void) {
+  List<int> a(42);
+  List<float> b(3.14f);
+  List<List<int>> c(a);
+}
+#+END_SRC
+
+Now for a complete template example. Template classes might be placed
+in a file called ~<NAME>.class.tpp~.
+
+#+BEGIN_SRC C++ :results output
+#include <iostream>
+#include <iomanip>
+
+// this is a default type. Basically, it says: if nothing is
+// specified, assume it is float
+template< typename T = float >
+class Vertex {
+  public:
+    Vertex(T const & x, T const & y, T const & z) : _x(x), _y(y), _z(z) {}
+    ~Vertex(void) {}
+
+    T const & getX() const {return (this->_x);};
+    T const & getY() const {return (this->_y);};
+    T const & getZ() const {return (this->_z);};
+  private:
+    T const _x;
+    T const _y;
+    T const _z;
+
+  // the default constructor is private, which means that this class
+  // must be instantiated using the (x, y, z) constructor.
+    Vertex(void);
+};
+
+template< typename T>
+std::ostream & operator<<(std::ostream & o, Vertex< T > const & v) {
+  std::cout.precision(1);
+  o << std::setiosflags(std::ios::fixed);
+  o << "Vertex( ";
+  o << v.getX() << ", ";
+  o << v.getY() << ", ";
+  o << v.getZ();
+  o << " )";
+  return (o);
+}
+
+int main(void) {
+  Vertex<int> a(1, 2, 3);
+  Vertex<> b(12, 23, 34);
+
+  std::cout << a << std::endl;
+  std::cout << b << std::endl;
+}
+#+END_SRC
+
+Specializations allow us to define specific behaviour when
+encountering a specfic type. These can be partial, or complete.
+Partial would redefine at least one of the typenames; complete, would
+redefine all of them.
+
+First define the base class. then, define its specializations:
+
+#+NAME: specialization-full-ex
+#+BEGIN_SRC C++ :flags -Wall -Wextra -Werror -std=c++98 :noweb yes
+#include <iostream>
+#include <iomanip>
+
+template<typename T, typename U>
+class Pair {
+  public:
+    Pair< T, U>(T const & lhs, U const & rhs) : _lhs(lhs), _rhs(rhs) {
+      std::cout << "Generic Template" << std::endl;
+    }
+    ~Pair<T, U>(void) {}
+
+    T const & fst(void) const {return this->_lhs;}
+    U const & snd(void) const {return this->_rhs;}
+  private:
+    T const & _lhs;
+    U const & _rhs;
+
+    Pair<T, U>(void);
+};
+
+template<typename T, typename U>
+std::ostream & operator<<(std::ostream & o, Pair<T, U> const & p) {
+  o << "Pair(  " << p.fst() << ", " << p.snd() << " )";
+  return (o);
+}
+
+// ===== int partial specialization ==================================
+
+template<typename U>
+class Pair<int, U> {
+  public:
+    Pair< int, U>(int const & lhs, U const & rhs) : _lhs(lhs), _rhs(rhs) {
+      std::cout << "Int Partial Specialization" << std::endl;
+    }
+    ~Pair<int, U>(void) {}
+
+    int const & fst(void) const {return this->_lhs;}
+    U const & snd(void) const {return this->_rhs;}
+  private:
+    int const & _lhs;
+    U const & _rhs;
+
+    Pair<int, U>(void);
+};
+
+#+END_SRC
+
+Complete specializations allow you to define very specific behaviour
+for a specific case. You can radically alter how a class works. Like
+in the case of a ~Pair(bool, bool)~ complete specialization. Since the
+value of two bools can be easily stored in an ~int~ variable.
+
+#+BEGIN_SRC C++ :flags -Wall -Wextra -Werror -std=c++98 :noweb yes :results output
+<<specialization-full-ex>>
+// ===== bool complete specialization ================================
+template<>
+class Pair<bool, bool> {
+  public:
+    Pair<bool, bool>(bool lhs, bool rhs) {
+      std::cout << "bool/bool specialization" << std::endl;
+      this->_n = 0;
+      this->_n = static_cast<int>(lhs) << 0;
+      this->_n = static_cast<int>(rhs) << 1;
+      return ;
+    }
+    ~Pair<bool, bool>(void) {};
+
+    bool fst(void) const {return (this->_n & 0x01); }
+    bool snd(void) const {return (this->_n & 0x01); }
+  private:
+    int _n;
+    Pair<bool, bool>(void);
+};
+
+template<>
+std::ostream & operator<<(std::ostream & o, Pair<bool, bool> const & p) {
+  o << std::boolalpha << "Pair(  " << p.fst() << ", " << p.snd() << " )";
+  return (o);
+}
+
+int main(void) {
+  Pair<int, int>a(4, 2);
+  Pair<std::string, float>b(std::string("Pi"), 3.14f);
+  Pair<float, bool>c(4.2f, true);
+  Pair<bool, bool>d(true, false);
+  std::cout << a << std::endl;
+  std::cout << b << std::endl;
+  std::cout << c << std::endl;
+  std::cout << d << std::endl;
+  return (0);
+}
+#+END_SRC
+** standard template library
+The STL contains a bunch of containers that are templated:
+ 1) std::list<int>
+ 2) std::map<std::string, int>
+ 3) std::vector<int>
+ 4) ...
+
+These containers have access to a bunch of functions. Namely,
+iterators. Just look it up.
+
+Maps are like python dictionnaries (key, value pairs).
+
+The algorithm library allows you to use stuff that can help manipulate
+data... For example, ~for_each~, which you can use:
+
+#+BEGIN_SRC C++
+#include <iostream>
+#include <algorithm>
+#include <list>
+
+void displayInt(int i) {
+  std::cout << i << std::endl;
+}
+
+int main(void) {
+  std::list<int> lst;
+
+  for (int i = 0; i < 10; i++) {
+    lst.push_back(i);
+  }
+  for_each(lst.begin(), lst.end(), displayInt);
+  return (0);
+}
+#+END_SRC
+

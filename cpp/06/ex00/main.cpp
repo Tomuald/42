@@ -1,5 +1,4 @@
 #include <iostream>
-//#include <cstring>
 #include "ConvertScalar.class.hpp"
 
 int main(int argc, char **argv) {
@@ -13,7 +12,6 @@ int main(int argc, char **argv) {
 
   literal = static_cast<std::string>(argv[1]);
   type = s.findType(literal);
-  std::cout << type << std::endl;
   if (type == "float") {
     float f = std::atof(literal.c_str());
     s.print(f);

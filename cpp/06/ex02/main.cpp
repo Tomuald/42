@@ -69,5 +69,6 @@ int main(int argc, char **argv) {
   b = generate();
   identify(b);
   identify(*b);
+  delete b;
   return (0);
 }

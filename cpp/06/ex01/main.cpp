@@ -24,11 +24,12 @@ int main(int argc, char **argv) {
   std::cout << data->s << std::endl;
   std::cout << data->i << std::endl;
   r = serialize(data);
+
   Data * bla;
 
   bla = deserialize(r);
   std::cout << bla->s << std::endl;
   std::cout << bla->i << std::endl;
-  std::cout << "WRITE BETTER TESTS!!!!" << std::endl;
+  delete data;
   return (0);
 }
