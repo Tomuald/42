@@ -14,7 +14,6 @@ Feel free to read [[https://github.com/vbachele/Inception][a tutorial]] to get g
   - [[#wordpress][wordpress]]
   - [[#mariadb][mariadb]]
 - [[#development][Development]]
-- [[#some-other-bullshit][some other bullshit]]
 
 * Requirements
 *Rules:*
@@ -76,4 +75,3 @@ systemwide access settings).
 * Development
 In this section, you'll find the actual instructions to build the
 project, including code samples when necessary.
-* some other bullshit
