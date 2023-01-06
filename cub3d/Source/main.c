@@ -47,7 +47,7 @@ int main(int argc, char **argv)
   }
   if (parser(argv[1], data) == EXIT_FAILURE)
   {
-    ft_printf(STDERR_FILENO, "Error\nInvalid map.\n");
+    ft_printf(STDERR_FILENO, "Error\nInvalid settings or map.\n");
     memclean(data);
     return (EXIT_FAILURE);
   }

@@ -196,26 +196,31 @@ int set_tokens(char **tokens, t_data *data)
   int i;
   int j;
   int color;
-  
+
+  color = -1;
   if (!tokens || !data)
     return (EXIT_FAILURE);
   i = 0;
   while (tokens[i])
   {
-    if (!tokens[i + 1])
-      return (EXIT_FAILURE);
     j = -1;
     while (++j < 4)
       if (ft_strncmp(tokens[i], get_wall(j), 2) == 0)
-	data->map->textures[j] = ft_strdup(tokens[(i++) + 1]);
-    if (ft_isinset('F', tokens[i]) || ft_isinset('C', tokens[i]))
+        data->map->textures[j] = ft_strdup(tokens[(i++) + 1]);
+    if ((ft_isinset('F', tokens[i]) || ft_isinset('C', tokens[i])) && ft_strlen(tokens[i]) == 1)
     {
+		if (ft_get_array_length(tokens) < 4) {
+			data->map->fcolor = -1;
+			data->map->ccolor = -1;
+			return (EXIT_FAILURE);
+		}
       color = convert_to_rgb(tokens[i + 1], tokens[i + 2], tokens[i + 3]);
-      if (ft_strncmp(tokens[i], "F", 1) == 0)
-	data->map->fcolor = color;
-      else if (ft_strncmp(tokens[i], "C", 1) == 0)
-	data->map->ccolor = color;
-      i += 2;
+      if (ft_strncmp(tokens[i], "F", 1) == 0 && color != -1) {
+        data->map->fcolor = color;
+      }
+      if (ft_strncmp(tokens[i], "C", 1) == 0 && color != -1) {
+        data->map->ccolor = color;
+      }
     }
     i++;
   }
@@ -362,7 +367,7 @@ int validate_data(t_data *data)
       return (EXIT_FAILURE);
   if (!data->map->fcolor || data->map->fcolor == -1)
      return (EXIT_FAILURE);
-  if (!data->map->fcolor || data->map->fcolor == -1)
+  if (!data->map->ccolor || data->map->ccolor == -1)
      return (EXIT_FAILURE);
   if (validate_map(data->map, data) == EXIT_FAILURE)
     return (EXIT_FAILURE);

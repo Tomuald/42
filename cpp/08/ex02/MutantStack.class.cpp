@@ -1,0 +1,3 @@
+#include "MutantStack.class.hpp"
+
+// Nothing to do here...

@@ -10,9 +10,6 @@ Stuff.
 There are two essential components to the Cub3D project: the Parser,
 and the 'Graphics Engine'.
 
-** [?] error management
-I would like to print better error messages. But how? I thought about
-the enum fix, but I don't think it's gonna work out...
 ** [0/2] compilation & headers
 Compilation needs to happen with minilibx. Build it from source. For
 Mac and Linux.
@@ -506,6 +503,8 @@ attributes, and setting them as needed.
 What happens when this function encounters an unknown token? Right
 now? Nothing. Do I want to make it do something?
 
+I need to figure out
+
 #+NAME: set-tokens
 #+HEADER: :exports code :mkdirp yes
 #+HEADER: :main no :noweb yes
@@ -515,7 +514,8 @@ int set_tokens(char **tokens, t_data *data)
   int i;
   int j;
   int color;
-  
+
+  color = -1;
   if (!tokens || !data)
     return (EXIT_FAILURE);
   i = 0;
@@ -526,14 +526,14 @@ int set_tokens(char **tokens, t_data *data)
     j = -1;
     while (++j < 4)
       if (ft_strncmp(tokens[i], get_wall(j), 2) == 0)
-	data->map->textures[j] = ft_strdup(tokens[(i++) + 1]);
-    if (ft_isinset('F', tokens[i]) || ft_isinset('C', tokens[i]))
+        data->map->textures[j] = ft_strdup(tokens[(i++) + 1]);
+    if ((ft_isinset('F', tokens[i]) || ft_isinset('C', tokens[i])) && ft_strlen(tokens[i]) == 1)
     {
       color = convert_to_rgb(tokens[i + 1], tokens[i + 2], tokens[i + 3]);
-      if (ft_strncmp(tokens[i], "F", 1) == 0)
-	data->map->fcolor = color;
-      else if (ft_strncmp(tokens[i], "C", 1) == 0)
-	data->map->ccolor = color;
+      if (ft_strncmp(tokens[i], "F", 1) == 0 && color != -1)
+        data->map->fcolor = color;
+      else if (ft_strncmp(tokens[i], "C", 1) == 0 && color != -1)
+        data->map->ccolor = color;
       i += 2;
     }
     i++;
@@ -541,9 +541,6 @@ int set_tokens(char **tokens, t_data *data)
   return (EXIT_SUCCESS);
 }
 #+END_SRC
-
-+ CHECKLIST
-  + [ ] move from char** map to t_point** map?
 
 The .cub map can contain spaces, and these spaces need to be dealt
 with properly. On top of that, the map does NOT need to be square to

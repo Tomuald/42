@@ -3,12 +3,11 @@
 #include <list>
 #include <algorithm>
 #include <iostream>
-//#include <stl>
 
 //========== Constructors & Destructors ============================
 Span::Span(void) : _max(0) {}
 Span::Span(unsigned int n) : _max(n) {}
-Span::Span(Span const & src) {*this = src;}
+Span::Span(Span const & src) : _array(src._array), _max(src._max) {*this = src;}
 Span::~Span(void) {}
 
 //========== Overloads  ============================================
@@ -30,18 +29,25 @@ void Span::addNumber(int const n) {
 }
 
 int Span::shortestSpan(void)  {
-  this->_array.sort();
-  std::list<int>::iterator iter = this->_array.begin();
-  std::advance(iter, this->_max - 2);
-  int before_last = *iter;
-  std::list<int>::iterator iter2 = this->_array.begin();
-  std::advance(iter2, this->_max - 1);
-  int last = *iter2;
-  return (std::abs(last - before_last));
+	this->_array.sort();
+
+	std::list<int>::iterator next = this->_array.begin();
+	std::list<int>::iterator iter = next++;
+	std::list<int>::iterator end = this->_array.end();
+
+	long min = std::abs(static_cast<long>(*(next++)) - static_cast<long>(*(iter++)));
+	long tmp;
+	while (next != end)
+	{
+		tmp = std::abs(static_cast<long>(*(next++)) - static_cast<long>(*(iter++)));
+		if (tmp < min)
+			min = tmp;
+	}
+	return (min);
 }
 
 int Span::longestSpan(void) {
-    if (this->getArray().size() < 2)
+  if (this->getArray().size() < 2)
     throw Span::TooFewNumbersException();
   int min  = *std::min_element(this->getArray().begin(), this->getArray().end());
   int max  = *std::max_element(this->getArray().begin(), this->getArray().end());

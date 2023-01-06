@@ -1,0 +1,23 @@
+
+WE           textures/west
+         SO               textures/south
+
+
+
+NO textures/north
+
+F 0,1,2
+C       0,12,23
+
+
+   EA   textures/SPRCab
+
+
+
+
+S1111111
+10001001
+10101001
+
+11001001
+11111111

@@ -14,6 +14,7 @@ int main(int argc, char **argv) {
   list.push_back(2);
   list.push_back(24);
   list.push_back(18);
-  easyfind(list, 18);
+  printf("%d\n", easyfind(list, 18));
+  printf("%d\n", easyfind(list, 255));
   return (0);
 }
