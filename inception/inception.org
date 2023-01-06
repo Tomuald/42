@@ -7,7 +7,7 @@ services.
 Feel free to read [[https://github.com/vbachele/Inception][a tutorial]] to get going!
 
 * Requirements
-#+OPTIONS: toc
+:TOC:
 *Rules:*
  1) The infrastructure MUST run inside a VM, and thus, MUST use
     ~docker-compose~.
@@ -51,7 +51,7 @@ Feel free to read [[https://github.com/vbachele/Inception][a tutorial]] to get g
  2) Look at the Diagram from the PDF, it is helpful!
  3) Look at the folder structure from the PDF
 * Research
-#+OPTIONS: toc
+:TOC:
 ** docker
 *** docker-compose
 See this [[https://www.educative.io/blog/docker-compose-tutorial][educative.io tutorial]].
@@ -66,7 +66,7 @@ systemwide access settings).
 ** wordpress
 ** mariadb
 * Development
-#+OPTIONS: toc
+:TOC:
 In this section, you'll find the actual instructions to build the
 project, including code samples when necessary.
 **
