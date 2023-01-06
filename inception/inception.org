@@ -68,6 +68,15 @@ Some useful links for the project:
  3) Look at the folder structure from the PDF
 * Research
 ** docker
+Most people who have written tutorials for the project seem to have
+used debian instead of alpine images. Both are fine apparently, and
+are sometimes used in the same projects. Some key differences:
+ 1) debian has a bigger dev community: more testing, packages, documentation
+ 2) alpine is lighter, has an efficient libc alternative, and a
+    simpler init system.
+
+I think I'll do like the others, but it'd be nice to investigate
+alpine too...
 *** docker-compose
 See this [[https://www.educative.io/blog/docker-compose-tutorial][educative.io tutorial]].
 *** docker-network
