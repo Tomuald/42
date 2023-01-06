@@ -1,5 +1,5 @@
 #+title: Inception
-#+OPTIONS: toc
+#+OPTIONS: toc:4
 DEADLINE: <2023-02-05 Sun>
 
 The purpose of this project is to create an infrastructure of Docker
