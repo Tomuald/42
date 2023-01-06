@@ -4,7 +4,14 @@ DEADLINE: <2023-02-05 Sun>
 The purpose of this project is to create an infrastructure of Docker
 services.
 
-Feel free to read [[https://github.com/vbachele/Inception][a tutorial]] to get going!
+Some useful links for the project:
+ 1) Tutorials
+    1) [[https://github.com/NEKuipers/Inception/blob/master/Inception_guide.txt][NEKuipers]]
+    2) [[https://github.com/vbachele/Inception][vbachele]]
+    3) [[https://github.com/twagger/inception][twagger]]
+ 2) Ressources
+    1) [[https://kapeli.com/cheat_sheets/Dockerfile.docset/Contents/Resources/Documents/index][docker cheatsheet]]
+    2) [[https://discord.com/channels/831591290311409738/964254222105346048][additional links]]
 
 * Table of Contents :TOC:
 - [[#requirements][Requirements]]
@@ -13,6 +20,7 @@ Feel free to read [[https://github.com/vbachele/Inception][a tutorial]] to get g
   - [[#nginx][nginx]]
   - [[#wordpress][wordpress]]
   - [[#mariadb][mariadb]]
+  - [[#virtual-machine][virtual machine]]
 - [[#development][Development]]
 
 * Requirements
@@ -72,6 +80,11 @@ systemwide access settings).
 *** fast-cgi
 ** wordpress
 ** mariadb
+** virtual machine
+The VM is actually one of the last things you'll set up during the
+project. Everything can be built here, then moved to the VM. See
+[[https://github.com/NEKuipers/Inception/blob/master/Inception_guide.txt][NKEuipers' tutorial]] for more information on this ("Part 3) The Virtual
+Machine").
 * Development
 In this section, you'll find the actual instructions to build the
 project, including code samples when necessary.
