@@ -1,6 +1,4 @@
 #+title: Inception
-
-* Inception
 DEADLINE: <2023-02-05 Sun>
 
 The purpose of this project is to create an infrastructure of Docker
@@ -8,7 +6,7 @@ services.
 
 Feel free to read [[https://github.com/vbachele/Inception][a tutorial]] to get going!
 
-** Requirements
+* Requirements
 *Rules:*
  1) The infrastructure MUST run inside a VM, and thus, MUST use
     ~docker-compose~.
@@ -38,11 +36,11 @@ Feel free to read [[https://github.com/vbachele/Inception][a tutorial]] to get g
      infrastructure, through port 443 ONLY, and using TLS v1.2 or 1.3
 
 *Required Services:*
- 1) 3 Containers that run, respectivelly:
+ 1) 3 Containers that run, respectively:
     1) NGINX with TLS (v1.2 or 1.3)
     2) Wordpress + php-fpm (installed and configured; without NGINX)
     3) MariaDB (without NGINX)
- 2) 2 Volumes that contain, respectivelly:
+ 2) 2 Volumes that contain, respectively:
     1) a WordPress database
     2) files for the WordPress website
  3) A ~docker-network~ that links between containers
@@ -51,20 +49,21 @@ Feel free to read [[https://github.com/vbachele/Inception][a tutorial]] to get g
  1) Research proper Dockerfile syntax, and the "PID1"
  2) Look at the Diagram from the PDF, it is helpful!
  3) Look at the folder structure from the PDF
-** Research
-*** docker
-**** docker-compose
+* Research
+** docker
+*** docker-compose
 See this [[https://www.educative.io/blog/docker-compose-tutorial][educative.io tutorial]].
-**** docker-network
+*** docker-network
 See this [[https://www.aquasec.com/cloud-native-academy/docker-container/docker-networking/][aqua tutorial]], and the links at the bottom of the page.
-*** nginx
+** nginx
 Why NGINX instead of Apache? Because it uses much less memory, and can
 handle about 4 times as many requests per second. This comes at the
 cost of decreased flexibility (such as being unable to override
 systemwide access settings).
-**** fast-cgi
-*** wordpress
-*** mariadb
-** Development
+*** fast-cgi
+** wordpress
+** mariadb
+* Development
 In this section, you'll find the actual instructions to build the
 project, including code samples when necessary.
+**
