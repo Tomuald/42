@@ -6,8 +6,14 @@ services.
 
 Feel free to read [[https://github.com/vbachele/Inception][a tutorial]] to get going!
 
-* Requirements
-:TOC:
+* Requirements :TOC:
+- [[#research][Research]]
+  - [[#docker][docker]]
+  - [[#nginx][nginx]]
+  - [[#wordpress][wordpress]]
+  - [[#mariadb][mariadb]]
+- [[#development][Development]]
+
 *Rules:*
  1) The infrastructure MUST run inside a VM, and thus, MUST use
     ~docker-compose~.
@@ -50,8 +56,7 @@ Feel free to read [[https://github.com/vbachele/Inception][a tutorial]] to get g
  1) Research proper Dockerfile syntax, and the "PID1"
  2) Look at the Diagram from the PDF, it is helpful!
  3) Look at the folder structure from the PDF
-* Research
-:TOC:
+* Research :TOC:
 ** docker
 *** docker-compose
 See this [[https://www.educative.io/blog/docker-compose-tutorial][educative.io tutorial]].
@@ -65,8 +70,7 @@ systemwide access settings).
 *** fast-cgi
 ** wordpress
 ** mariadb
-* Development
-:TOC:
+* Development :TOC:
 In this section, you'll find the actual instructions to build the
 project, including code samples when necessary.
 **
