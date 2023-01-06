@@ -2,3 +2,69 @@
 
 * Inception
 DEADLINE: <2023-02-05 Sun>
+
+The purpose of this project is to create an infrastructure of Docker
+services.
+
+Feel free to read [[https://github.com/vbachele/Inception][a tutorial]] to get going!
+
+** Requirements
+*Rules:*
+ 1) The infrastructure MUST run inside a VM, and thus, MUST use
+    ~docker-compose~.
+ 2) Each docker image must be named after the service
+ 3) Each service must run inside its dedicated container
+ 4) The containers must run under Alpine Linux or Debian Buster
+ 5) Each container must contain a handmade Dockerfile
+ 6) Every Dockerfile must be called inside a ~docker-compose.yml~,
+    which is itself called by the Makefile ???
+ 7) Containers must reboot if a crash occurs
+ 8) The WordPress database must contain two user accounts:
+    1) the Admin (username cannot contain "Admin|admin"")
+ 9) The use of "network: host", "--link", and "links" is forbidden.
+    1) the line "network(s)" must be found in the "docker-compose.yml".
+ 10) The containers CANNOT be run in an infinite loop.
+     1) forbidden hacky patches: tail -f, bash, sleep infinity, while
+        true, ...
+ 11) Your domain name...
+     1) must be: <login>.42.fr
+     2) must point to your local IP address
+ 12) The "latest" tag is forbidden
+ 13) Passwords must NEVER be written in your Dockerfiles
+ 14) You MUST use environment variables
+ 15) The use of a ~.env~ file to store envvars is strongly suggested
+     (it should be kept at the root of the srcs directory)
+ 16) The NGINX container must be the sole entrypoint of the
+     infrastructure, through port 443 ONLY, and using TLS v1.2 or 1.3
+
+*Required Services:*
+ 1) 3 Containers that run, respectivelly:
+    1) NGINX with TLS (v1.2 or 1.3)
+    2) Wordpress + php-fpm (installed and configured; without NGINX)
+    3) MariaDB (without NGINX)
+ 2) 2 Volumes that contain, respectivelly:
+    1) a WordPress database
+    2) files for the WordPress website
+ 3) A ~docker-network~ that links between containers
+
+*A few suggestions:*
+ 1) Research proper Dockerfile syntax, and the "PID1"
+ 2) Look at the Diagram from the PDF, it is helpful!
+ 3) Look at the folder structure from the PDF
+** Research
+*** docker
+**** docker-compose
+See this [[https://www.educative.io/blog/docker-compose-tutorial][educative.io tutorial]].
+**** docker-network
+See this [[https://www.aquasec.com/cloud-native-academy/docker-container/docker-networking/][aqua tutorial]], and the links at the bottom of the page.
+*** nginx
+Why NGINX instead of Apache? Because it uses much less memory, and can
+handle about 4 times as many requests per second. This comes at the
+cost of decreased flexibility (such as being unable to override
+systemwide access settings).
+**** fast-cgi
+*** wordpress
+*** mariadb
+** Development
+In this section, you'll find the actual instructions to build the
+project, including code samples when necessary.
