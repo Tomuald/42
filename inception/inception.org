@@ -15,13 +15,12 @@ Some useful links for the project:
 
 * Table of Contents :TOC:
 - [[#requirements][Requirements]]
-- [[#research][Research]]
+- [[#research--development][Research & Development]]
+  - [[#virtual-machine][virtual machine]]
   - [[#docker][docker]]
   - [[#nginx][nginx]]
   - [[#wordpress][wordpress]]
   - [[#mariadb][mariadb]]
-  - [[#virtual-machine][virtual machine]]
-- [[#development][Development]]
 
 * Requirements
 *Rules:*
@@ -44,7 +43,7 @@ Some useful links for the project:
  11) Your domain name...
      1) must be: <login>.42.fr
      2) must point to your local IP address
- 12) The "latest" tag is forbidden
+ 12) The "latest" tag is forbidden (~FROM debian:latest~ in a Dockerfile)
  13) Passwords must NEVER be written in your Dockerfiles
  14) You MUST use environment variables
  15) The use of a ~.env~ file to store envvars is strongly suggested
@@ -66,34 +65,203 @@ Some useful links for the project:
  1) Research proper Dockerfile syntax, and the "PID1"
  2) Look at the Diagram from the PDF, it is helpful!
  3) Look at the folder structure from the PDF
-* Research
+* Research & Development
+** virtual machine
+First off, build a VM with a GUI (you'll need a GUI to open a web
+browser, and display an html page). Use debian. It's already on the
+school computers.
+
+Remember to do a barebones install; some default system services
+(iptables, namely) make it incredibly complicated to set up the SSH
+connection. Follow [[https://www.golinuxcloud.com/ssh-into-virtualbox-vm/][this guide]] to get SSH working without a hitch. Once
+that's set up, work from your host OS: it is way more efficient. On a
+side note, why are VirtualBox guest OSes so slow? even with a ton of
+vRAM...
+
+I'm still stuck with a NAT IP address, but everything seems to work
+smoothly. I tested with another computer, and everything seems to run
+A-OK!
+
+Also, there's some trickery to use docker without sudo... e.g.: adding
+your user to the sudoers group, and to the sudoers file; you can look
+up this [[https://stackoverflow.com/questions/48957195/how-to-fix-docker-got-permission-denied-issue][stackoverflow thread]] for the procedure.
+
+Then, install Docker.
+
 ** docker
-Most people who have written tutorials for the project seem to have
-used debian instead of alpine images. Both are fine apparently, and
-are sometimes used in the same projects. Some key differences:
+Docker has pretty good documentation. You can find the [[https://docs.docker.com/engine/install/debian/#install-using-the-repository][installation
+instructions here]]. Follow this guide properly, and everything should
+set up easily. These instructions are valid as of today, 2023-01-08.
+
+Remember that you need sudo privileges to run the following commands.
+
+Start by installing requisites for docker:
+#+begin_src bash
+sudo apt-get update
+
+sudo apt-get install ca-certificates curl gnupg lsb-release
+#+END_SRC
+
+Then, add Docker's GPG key, and set up the repository:
+#+begin_src bash
+sudo mkdir -p /etc/apt/keyrings
+
+curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+#+end_src
+
+Install Docker Engine, and Docker Compose, both are necessary for the project:
+#+begin_src bash
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+#+end_src
+
+Hopefully, you set up your VM with enough space; docker requires
+~500MB of space.
+
+Load up an image designed for testing to ensure that everything
+installed properly:
+#+begin_src bash
+docker run hello-world
+#+end_src
+
+*** useful commands
+#+begin_src bash
+docker build <folder> # builds the image from Dockerfile
+docker run <image> # run the docker image
+    -d # run container in background
+    -p # publish a container's port to the host
+docker image kill <image> # stop a running image
+docker image rm -f # force delete the image
+#+end_src
+
+*** dockerfiles
+Dockerfiles are Makefiles for docker images. They are text documents
+that contain instructions (keywords defined by docker), and commands
+(bash or docker). The format is simple:
+#+begin_src dockerfile
+# Comment
+INSTRUCTION arguments
+#+end_src
+
+Multiline commands can be written by escaping the newline with ~\~.
+
+Noteworthy instructions:
+ 1) FROM: The FROM instruction sets the base image used for subsequent
+    instructions. A Dockerfile MUST start with this instruction. You
+    can build composite images by adding more FROM keywords. See the
+    [[https://docs.docker.com/engine/reference/builder/#from][docs]] for more info. i.e.: ~FROM <image>:<tag>~.
+ 2) ARG: ARG is used to declare variables within the Dockerfile which
+    can reused anywhere in the subsequent code. BEWARE! an ARG defined
+    before a FROM is "outside of a build stage, so it can't be used in
+    any instruction after a FROM". i.e.: ~ARG variable=value~.
+ 3) RUN: RUN allows you to execute shell commands in a new layer on
+    top of the image, and commit the results. This new image will be
+    used for the next instructions. i.e.: ~RUN <command>~.
+ 4) CMD: The main purpose of a CMD is to provide defaults for an
+    executing containers. There can be only one CMD in a Dockerfile.
+    There are two forms for CMD instructions: shell form, and exec
+    form. The second is preferred, and is expressed as a JSON array.
+    i.e.: ~CMD ["/usr/bin/wc", "--help"]~.
+ 5) EXPOSE: EXPOSE informs Docker that the container listens of the
+    specified network ports. You can specify TCP or UDP (TCP is the
+    default). EXPORE doesn't publish the port, it functions as
+    documentation, mainly... To expose the port, add the ~-p~ flag on
+    ~docker run~. i.e.: ~EXPOSE 80/udp~
+ 6) ENV: ...
+ 7) ADD: ...
+ 8) COPY: COPY copies files or directories from <src>, and adds them
+    to the filesystem of the container at the path <dest>. You can use
+    Go's [[https://golang.org/pkg/path/filepath#Match][filepath.Match]] rules to use wildcards.
+ 9) ENTRYPOINT: allows you to configure a container that will run as
+    an executable. Use the (preferred) exec form: ~ENTRYPOINT
+    ["executable", "param1", "param2"]~.
+ 10) WORKDIR: sets the working directory for any ~RUN, CMD,
+     ENTRYPOINT, COPY~, and ~ADD~ instructions. You can set it
+     multiple times.
+
+*** docker-compose
+See this [[https://www.educative.io/blog/docker-compose-tutorial][educative.io tutorial]].
+
+All right, so docker-compose is the essential building block of the
+project. It is what builds our images.
+
+Most people who have written tutorials for the project
+seem to have used debian instead of alpine images. Both are fine
+apparently, and are sometimes used in the same projects. Some key
+differences:
  1) debian has a bigger dev community: more testing, packages, documentation
  2) alpine is lighter, has an efficient libc alternative, and a
     simpler init system.
 
 I think I'll do like the others, but it'd be nice to investigate
 alpine too...
-*** docker-compose
-See this [[https://www.educative.io/blog/docker-compose-tutorial][educative.io tutorial]].
+
 *** docker-network
 See this [[https://www.aquasec.com/cloud-native-academy/docker-container/docker-networking/][aqua tutorial]], and the links at the bottom of the page.
 ** nginx
-Why NGINX instead of Apache? Because it uses much less memory, and can
-handle about 4 times as many requests per second. This comes at the
-cost of decreased flexibility (such as being unable to override
-systemwide access settings).
+Nginx (pronounced engine-x), is a FLOSS web server. Why NGINX instead
+of Apache? Because it uses much less memory, can handle about 4 times
+as many requests per second, is highly scalable, has a modular,
+event-driven architecture; it also works as a load balancer, and HTTP
+cache, and a reverse proxy. This comes at the cost of decreased
+flexibility (such as being unable to override systemwide access
+settings).
+
+[[https://business-science.github.io/shiny-production-with-aws-book/https-nginx-docker-compose.html][This]] might be useful; [[https://www.baeldung.com/linux/nginx-docker-container][this]] seems even better.
+
+A simple nginx Dockerfile:
+#+begin_src dockerfile
+# pull the debian:buster image
+FROM debian:buster
+
+RUN apt-get update -y
+RUN apt-get -y install nginx openssl
+
+# replace this with your actual conf path
+COPY mycustomconf /etc/nginx/conf.d/
+
+# exposes the 443 port (the HTTPS port)
+EXPOSE 443
+
+CMD ["/usr/sbin/nginx", "-g", "daemon off;"]
+#+end_src
+
+The ~-subj~ flag is used to bypass prompts. See the digicert [[https://www.digicert.com/kb/ssl-support/openssl-quick-reference-guide.htm][website]]
+for more info. With ~EXPOSE 443~, the webpage won't load, because
+there's no certificate yet.
+
+To test if this works properly, put this Dockerfile in a folder
+($HOME/Desktop/server in my VM right now), and run:
+#+begin_src bash
+docker build . -t nginx
+
+docker run -d -p 80:80 nginx
+#+end_src
+
+The ~-t~ gives a name to the built image; ~-d~ runs in detached mode,
+~-p~ maps <localport>:<containerport>. Open up "localhost" on your
+favorite browser, within your VM.
+
+Now, the subject requires that we use ssl certificates. That requires
+us to write a custom nginx configuration file. We're gonna generate
+our certs with openssl; they're gonna be self-signed, which means
+untrusted by web browsers unless approved by a certificate authority
+(for the purpose of the project, this a self-signed certificate is
+fine). This [[https://stackoverflow.com/questions/10175812/how-to-generate-a-self-signed-ssl-certificate-using-openssl][stackoverflow thread]] has some good information about it.
+This [[https://www.digitalocean.com/community/tutorials/how-to-create-a-self-signed-ssl-certificate-for-nginx-on-debian-10][tutorial]] might come in handy too; have a look there's a lot of
+info about self-signed certificates.
+
+- [X] exposes port 443
+- [X] installs openssl
+- [ ] generates certificates
+- [ ] configures openssl
+- [ ] has a config file
+  - [ ] listens on port 443
+  - [ ] uses TLS v1.2 and v1.3
 *** fast-cgi
+This might not require any configuration... Check this later.
 ** wordpress
 ** mariadb
-** virtual machine
-The VM is actually one of the last things you'll set up during the
-project. Everything can be built here, then moved to the VM. See
-[[https://github.com/NEKuipers/Inception/blob/master/Inception_guide.txt][NKEuipers' tutorial]] for more information on this ("Part 3) The Virtual
-Machine").
-* Development
-In this section, you'll find the actual instructions to build the
-project, including code samples when necessary.
