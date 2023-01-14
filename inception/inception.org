@@ -208,11 +208,12 @@ version: '3'
 services:
   nginx:
     container_name: nginx
+    dockerfile: Dockerfile
     build: ./srcs/requirements/nginx/
     ports:
       - 443:443
     volumes:
-      - wordpress_data:/var/www/html/
+      - /home/tgarriss/wordpress_data:/var/www/html/
     networks:
       - network
 #+end_src
@@ -376,13 +377,11 @@ function.
     container_name: wordpress
     depends_on:
       - mariadb
-    build:
-      context: ./requirements/wordpress
-      dockerfile: Dockerfile
+    build: ./srcs/requirements/wordpress/
     env_file:
       - .env
     volumes:
-      - wordpress_data:/var/www/html/
+      - /home/tgarriss/wordpress_data:/var/www/html/
     networks:
       - network
 #+end_src
@@ -416,9 +415,9 @@ connected together.
 #+begin_src docker-compose
   mariadb:
     container_name: mariadb
-    build: ./requirements/mariadb
+    build: ./srcs/requirements/mariadb/
     volumes:
-      - mariadb_data:/var/lib/mariadb/
+      - /home/tgarriss/mariadb_data:/var/lib/mariadb/
     networks:
       - network
     env_file:
