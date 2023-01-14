@@ -3,7 +3,6 @@ version: '3'
 services:
   nginx:
     container_name: nginx
-    dockerfile: Dockerfile
     build: ./srcs/requirements/nginx/
     ports:
       - 443:443
@@ -36,7 +35,17 @@ services:
 
 volumes:
   mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/tgarriss/mariadb_data
+      o: bind
   wordpress_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/tgarriss/wordpress_data
+      o: bind
 
 networks:
   network:

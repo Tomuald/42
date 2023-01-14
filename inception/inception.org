@@ -201,6 +201,10 @@ Noteworthy instructions:
 
 *** docker-compose
 Docker-compose make building containers easier.
+
+There's still some stuff I don't understand about volumes... Namely,
+what the fuck happens? It copies the <host_path> to <client_path>?
+What files do I keep in there? My site files, my config... ?
 #+name: nginx-compose
 #+begin_src docker-compose
 version: '3'
@@ -208,7 +212,6 @@ version: '3'
 services:
   nginx:
     container_name: nginx
-    dockerfile: Dockerfile
     build: ./srcs/requirements/nginx/
     ports:
       - 443:443
@@ -388,6 +391,7 @@ function.
 
 *** wordpress dockerfile
 Now for the wordpress Dockerfile...
+
 #+name: wp-dockerfile-dev
 #+begin_src dockerfile
 FROM debian:buster
@@ -403,7 +407,8 @@ RUN cp /tmp/wordpress/wp-config-sample.php /tmp/wordpress/wp-config.php
 In order to configure wordpress programatically (this needs to be done
 because you'll be booting up a new instance of your containers every
 time, and don't wanna go through the install process manually), you'll
-need to use ~wp core / wp cli~. Check out [[https://developer.wordpress.org/cli/commands/core/install/][this tutorial]].
+need to use ~wp core / wp cli~. Check out [[https://developer.wordpress.org/cli/commands/core/install/][this tutorial]], this [[https://developer.wordpress.org/cli/commands/core/install/][wp-core]]
+docs, this [[https://developer.wordpress.org/cli/commands/user/create/][wp-user]], or this [[https://stackoverflow.com/questions/73744266/install-wordpress-with-cli-in-docker-gives-error-establishing-database-connecti][stackoverflow]] thread.
 
 ** mariadb
 mariadb is necessary for wordpress to function properly. I've been
@@ -442,7 +447,17 @@ networks:
 #+begin_src docker-compose
 volumes:
   mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/tgarriss/mariadb_data
+      o: bind
   wordpress_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/tgarriss/wordpress_data
+      o: bind
 #+end_src
 * Production :noexport:
 ** docker-compose
