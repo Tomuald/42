@@ -1,8 +1,14 @@
 #+title: Inception
+#+PROPERTY: header-args :noweb yes
 DEADLINE: <2023-02-05 Sun>
 
-The purpose of this project is to create an infrastructure of Docker
-services.
+The purpose of this project is to create a LEMP infrastructure of
+Docker services. LEMP refers to a collection of open-source software
+that is commonly used together to serve web applications. The term
+LEMP is an acronym that represents the configuration of a Linux
+operating system with an nginx (pronounced engine-x, hence the E in
+the acronym) web server, with site data stored in a MySQL database and
+dynamic content processed by PHP.
 
 Some useful links for the project:
  1) Tutorials
@@ -18,9 +24,11 @@ Some useful links for the project:
 - [[#research--development][Research & Development]]
   - [[#virtual-machine][virtual machine]]
   - [[#docker][docker]]
+  - [[#environment-variables-setup][environment variables setup]]
   - [[#nginx][nginx]]
   - [[#wordpress][wordpress]]
   - [[#mariadb][mariadb]]
+  - [[#network][network]]
 
 * Requirements
 *Rules:*
@@ -31,7 +39,7 @@ Some useful links for the project:
  4) The containers must run under Alpine Linux or Debian Buster
  5) Each container must contain a handmade Dockerfile
  6) Every Dockerfile must be called inside a ~docker-compose.yml~,
-    which is itself called by the Makefile ???
+    which is itself called by the Makefile.
  7) Containers must reboot if a crash occurs
  8) The WordPress database must contain two user accounts:
     1) the Admin (username cannot contain "Admin|admin"")
@@ -100,6 +108,7 @@ Start by installing requisites for docker:
 sudo apt-get update
 
 sudo apt-get install ca-certificates curl gnupg lsb-release
+sudo apt-get install docker-compose
 #+END_SRC
 
 Then, add Docker's GPG key, and set up the repository:
@@ -146,6 +155,11 @@ that contain instructions (keywords defined by docker), and commands
 INSTRUCTION arguments
 #+end_src
 
+Any instruction in the Dockerfile operates on its respective
+container. i.e.: if you install something, it installs it your
+container's filesystem! To have a look around a container, use the
+~docker exec -t -i <containerID> /bin/bash~ command.
+
 Multiline commands can be written by escaping the newline with ~\~.
 
 Noteworthy instructions:
@@ -183,24 +197,39 @@ Noteworthy instructions:
      multiple times.
 
 *** docker-compose
-See this [[https://www.educative.io/blog/docker-compose-tutorial][educative.io tutorial]].
+Docker-compose make building containers easier.
+#+name: nginx-compose
+#+begin_src docker-compose
+version: '3'
 
-All right, so docker-compose is the essential building block of the
-project. It is what builds our images.
+services:
+  nginx:
+    container_name: nginx
+    build: ./nginx
+    ports:
+      - 443:443
+#+end_src
 
-Most people who have written tutorials for the project
-seem to have used debian instead of alpine images. Both are fine
-apparently, and are sometimes used in the same projects. Some key
-differences:
- 1) debian has a bigger dev community: more testing, packages, documentation
- 2) alpine is lighter, has an efficient libc alternative, and a
-    simpler init system.
-
-I think I'll do like the others, but it'd be nice to investigate
-alpine too...
+Call this docker-compose file with: ~docker compose -f
+docker-compose.yml up -d --build~. This runs the build process, and
+spins up the nginx container.
 
 *** docker-network
 See this [[https://www.aquasec.com/cloud-native-academy/docker-container/docker-networking/][aqua tutorial]], and the links at the bottom of the page.
+** environment variables setup
+Sensitive data used by the db and wordpress should be kept safely
+stored in a ~.env~ file.
+
+In your root directory, add the following file:
+#+name: .env-config-dev
+#+begin_src text
+MYSQL_ROOT_PASSWORD=inception
+MYSQL_USER=tgarriss
+MYSQL_PASSWORD=tgarriss
+#+end_src
+
+Make sure that you ignore this file in both your ~.gitignore~ and
+~.dockerignore~ files.
 ** nginx
 Nginx (pronounced engine-x), is a FLOSS web server. Why NGINX instead
 of Apache? Because it uses much less memory, can handle about 4 times
@@ -212,16 +241,57 @@ settings).
 
 [[https://business-science.github.io/shiny-production-with-aws-book/https-nginx-docker-compose.html][This]] might be useful; [[https://www.baeldung.com/linux/nginx-docker-container][this]] seems even better.
 
-A simple nginx Dockerfile:
+*** binding localhost to domain
+Binding your domain name (<login>.42.fr, for this project) to your
+localhost is easy. Simply add "127.0.0.1 localhost <domain-name>" to
+your VM's ~/etc/hosts~ file.
+
+*** A simple setup
+WARNING: This works for a docker-compose.yml configured with port 80,
+not 443! It is meant as a simple example:
+#+begin_src dockerfile
+FROM debian:buster
+
+RUN apt-get update -y && apt-get -y install nginx
+
+COPY ./nginx.conf /etc/nginx/conf.d/
+COPY ./index.html /var/www/html/
+
+CMD ["/usr/sbin/nginx", "-g", "daemon off;"]
+#+end_src
+
+Assuming you have your custom nginx config, and an html file in your
+current directory:
+ 1) Pull the img
+ 2) update and install nginx
+ 3) copy the files to wherever you want them in your container
+ 4) start up nginx
+
+If everything went ok, you can log into your VM, launch firefox, and
+access your domain name; it should display your index.html webpage.
+
+*** enabling https
+Now, for enabling https support (using port 443, instead of port 80).
+#+name: nginx-dockerfile-dev
 #+begin_src dockerfile
 # pull the debian:buster image
 FROM debian:buster
 
 RUN apt-get update -y
 RUN apt-get -y install nginx openssl
+# this installs php and php7.3-fpm
+RUN apt-get -y install php php7.3-fpm
+
+# required; if inexistant, openssl call raises an error
+RUN mkdir /etc/nginx/ssl/
+RUN openssl req -x509 -nodes -days 365 \
+        -newkey rsa:2048 \
+        -keyout /etc/nginx/ssl/tgarriss.key \
+        -out /etc/nginx/ssl/tgarriss.csr \
+        -subj "/C=CA/ST=QC/L=Thomas/O=42Quebec/OU=tgarriss/CN=tgarriss"
 
 # replace this with your actual conf path
-COPY mycustomconf /etc/nginx/conf.d/
+COPY nginx.conf /etc/nginx/conf.d/
 
 # exposes the 443 port (the HTTPS port)
 EXPOSE 443
@@ -233,18 +303,6 @@ The ~-subj~ flag is used to bypass prompts. See the digicert [[https://www.digic
 for more info. With ~EXPOSE 443~, the webpage won't load, because
 there's no certificate yet.
 
-To test if this works properly, put this Dockerfile in a folder
-($HOME/Desktop/server in my VM right now), and run:
-#+begin_src bash
-docker build . -t nginx
-
-docker run -d -p 80:80 nginx
-#+end_src
-
-The ~-t~ gives a name to the built image; ~-d~ runs in detached mode,
-~-p~ maps <localport>:<containerport>. Open up "localhost" on your
-favorite browser, within your VM.
-
 Now, the subject requires that we use ssl certificates. That requires
 us to write a custom nginx configuration file. We're gonna generate
 our certs with openssl; they're gonna be self-signed, which means
@@ -254,14 +312,166 @@ fine). This [[https://stackoverflow.com/questions/10175812/how-to-generate-a-sel
 This [[https://www.digitalocean.com/community/tutorials/how-to-create-a-self-signed-ssl-certificate-for-nginx-on-debian-10][tutorial]] might come in handy too; have a look there's a lot of
 info about self-signed certificates.
 
-- [X] exposes port 443
+TSL (Transport Security Layer) and SSL (Secure Sockets Layer) are web
+protocols that wrap normal traffic in a protected, encrypted wrapper.
+These protocols use a combination of public and private keys. The SSL
+key is kept secret on the server, and is used to encrypt content sent
+to clients. The SSL certificate is publicly shared with anyone who
+requests the content, and decrypts the content signed by the
+associated SSL key.
+
+- [X] exposes port 443y
 - [X] installs openssl
-- [ ] generates certificates
-- [ ] configures openssl
-- [ ] has a config file
-  - [ ] listens on port 443
-  - [ ] uses TLS v1.2 and v1.3
+- [X] generates certificates
+- [X] configures openssl
+- [-] has a nginx config file
+  - [X] listens on port 443
+  - [X] uses TLS v1.2 and v1.3
+  - [ ] other things... ???
+*** nginx config
+WARNING: Remember that you'll be using wordpress to display a
+website... there's somekind of interaction here that's missing.
+Otherwise, my simple index.html webpage is displayed on https.
+
+#+name: nginx-config-dev
+#+begin_src text
+server {
+  # ssl specifies that it should use ssl
+  listen 443 ssl;
+  # the [::]: means any ipv6 addr
+  listen [::]:443 ssl;
+  server_name tgarriss.42.fr;
+
+  # sets the cert/key pair and enables TLS
+  ssl_certificate /etc/nginx/ssl/tgarriss.csr;
+  ssl_certificate_key /etc/nginx/ssl/tgarriss.key;
+  ssl_protocols TLSv1.2 TLSv1.3;
+
+  root /var/www/html/;
+  index index.html;
+  location / {
+		try_files $uri $uri/ /index.php$is_args$args;
+	}
+}
+#+end_src
 *** fast-cgi
-This might not require any configuration... Check this later.
+This is required for interaction with wordpress, and mariadb.
 ** wordpress
+Wordpress is a content management system (CMS). It requires a web
+server (nginx), a database (mariadb), and PHP (php-fpm) in order to
+function.
+
+*** wordpress docker-compose
+#+name: wordpress-compose
+#+begin_src docker-compose
+  wordpress:
+    container_name: wordpress
+    depends_on:
+      - mariadb
+    build:
+      context: ./requirements/wordpress
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - wordpress_data:/var/www/html/
+    network:
+      - network
+#+end_src
+
+*** wordpress dockerfile
+Now for the wordpress Dockerfile...
+#+name: wp-dockerfile-dev
+#+begin_src dockerfile
+FROM debian:buster
+
+RUN apt-get -y update && apt-get -y install php-fpm php-mysql
+RUN apt-get -y install curl
+WORKDIR /tmp/
+RUN curl -LO https://wordpress.org/latest.tar.gz
+RUN tar -xzvf latest.tar.gz
+RUN cp /tmp/wordpress/wp-config-sample.php /tmp/wordpress/wp-config.php
+#+end_src
+
+In order to configure wordpress programatically (this needs to be done
+because you'll be booting up a new instance of your containers every
+time, and don't wanna go through the install process manually), you'll
+need to use ~wp core / wp cli~. Check out [[https://developer.wordpress.org/cli/commands/core/install/][this tutorial]].
 ** mariadb
+mariadb is necessary for wordpress to function properly. I've been
+trying to chunk this down into managable pieces, but it's all
+connected together.
+
+*** mariadb docker-compose
+#+name: mariadb-compose
+#+begin_src docker-compose
+  mariadb:
+    container_name: mariadb
+    build: ./requirements/mariadb
+    volumes:
+      - mariadb_data:/var/lib/mariadb
+    networks:
+      - network
+    env_file:
+      - .env
+#+end_src
+
+#+name: db-dockerfile-dev
+#+begin_src dockerfile
+...
+#+end_src
+** network
+#+name: network-compose
+#+begin_src docker-compose
+networks:
+  network:
+    driver: bridge
+#+end_src
+* Production :noexport:
+** docker-compose
+#+name: full-docker-compose
+#+header: :tangle ./srcs/docker-compose.yml :noweb yes
+#+begin_src dockerfile
+<<nginx-compose>>
+
+<<mariadb-compose>>
+
+<<wordpress-compose>>
+
+<<network-compose>>
+#+end_src
+** Dockerfiles
+#+name: nginx-dockerfile
+#+header: :tangle ./srcs/requirements/nginx/Dockerfile
+#+header: :noweb yes
+#+begin_src dockerfile
+<<nginx-dockerfile-dev>>
+#+end_src
+
+#+name: wp-dockerfile
+#+header: :tangle ./srcs/requirements/wordpress/Dockerfile
+#+header: :noweb yes
+#+begin_src dockerfile
+<<wp-dockerfile-dev>>
+#+end_src
+
+#+name: db-dockerfile
+#+header: :tangle ./srcs/requirements/wordpress/Dockerfile
+#+header: :noweb yes
+#+begin_src dockerfile
+<<db-dockerfile-dev>>
+#+end_src
+** nginx.conf
+#+name: nginx-config
+#+header: :tangle ./srcs/requirements/nginx/nginx.conf
+#+header: :noweb yes
+#+begin_src text
+<<nginx-config-dev>>
+#+end_src
+** .env file
+#+name: .env-config
+#+header: :tangle ./srcs/.env
+#+header: :noweb yes
+#+begin_src text
+<<.env-config-dev>>
+#+end_src
