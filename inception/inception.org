@@ -208,6 +208,8 @@ services:
     build: ./nginx
     ports:
       - 443:443
+    networks:
+      - network
 #+end_src
 
 Call this docker-compose file with: ~docker compose -f
@@ -246,7 +248,7 @@ Binding your domain name (<login>.42.fr, for this project) to your
 localhost is easy. Simply add "127.0.0.1 localhost <domain-name>" to
 your VM's ~/etc/hosts~ file.
 
-*** A simple setup
+*** a simple setup
 WARNING: This works for a docker-compose.yml configured with port 80,
 not 443! It is meant as a simple example:
 #+begin_src dockerfile
@@ -375,7 +377,7 @@ function.
       - .env
     volumes:
       - wordpress_data:/var/www/html/
-    network:
+    networks:
       - network
 #+end_src
 
@@ -474,4 +476,21 @@ networks:
 #+header: :noweb yes
 #+begin_src text
 <<.env-config-dev>>
+#+end_src
+** makefile
+#+name: makefile
+#+header: :tangle ./Makefile
+#+begin_src makefile
+all:
+	docker compose -f ./srcs/docker-compose.yml up -d --build
+
+down:
+	docker compose -f ./scrs/docker-compose.yml down
+
+clean:
+	docker stop $$(docker ps -qa);\
+	docker rm $$(docker ps -qa);\
+	docker image rm $$(docker images -qa);\
+
+.PHONY: all down clean
 #+end_src

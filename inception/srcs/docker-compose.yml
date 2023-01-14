@@ -6,6 +6,8 @@ services:
     build: ./nginx
     ports:
       - 443:443
+    networks:
+      - network
 
   mariadb:
     container_name: mariadb
@@ -27,8 +29,8 @@ services:
     env_file:
       - .env
     volumes:
-      - wordpress_data:/var/www/html
-    network:
+      - wordpress_data:/var/www/html/
+    networks:
       - network
 
 networks:
