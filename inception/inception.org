@@ -226,7 +226,7 @@ docker-compose.yml up -d --build~. This runs the build process, and
 spins up the nginx container.
 
 *** docker-network
-See this [[https://www.aquasec.com/cloud-native-academy/docker-container/docker-networking/][aqua tutorial]], and the links at the bottom of the page.
+See this [[https://www.aquasec.com/cloud-native-academy/docker-container/docker-networking/][aqua tutorial]], and the links at the bottom of the webpage.
 
 ** environment variables setup
 Sensitive data used by the db and wordpress should be kept safely
@@ -412,6 +412,8 @@ WORKDIR /tmp/
 RUN curl -LO https://wordpress.org/latest.tar.gz
 RUN tar -xzvf latest.tar.gz
 RUN cp /tmp/wordpress/wp-config-sample.php /tmp/wordpress/wp-config.php
+
+EXPOSE 9000
 #+end_src
 
 In order to configure wordpress programatically (this needs to be done
@@ -535,4 +537,34 @@ clean:
 	docker image rm $$(docker images -qa);\
 
 .PHONY: all down clean
+#+end_src
+** simple html
+#+name: simple-html
+#+header: :tangle ./srcs/requirements/nginx/index.html
+#+begin_src html
+<HTML>
+
+<HEAD>
+
+<TITLE>Your Title Here</TITLE>
+
+</HEAD>
+
+<BODY BGCOLOR="FFFFFF">
+
+<HR>
+
+<H1>This is a Header</H1>
+
+<H2>This is a Medium Header</H2>
+
+<P> This is a new paragraph!
+
+<P> <B>This is a new paragraph!</B>
+
+<BR> <B><I>This is a new sentence without a paragraph break, in bold italics.</I></B>
+
+<HR>
+</BODY>
+</HTML>
 #+end_src

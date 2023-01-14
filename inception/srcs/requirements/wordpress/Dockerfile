@@ -6,3 +6,5 @@ WORKDIR /tmp/
 RUN curl -LO https://wordpress.org/latest.tar.gz
 RUN tar -xzvf latest.tar.gz
 RUN cp /tmp/wordpress/wp-config-sample.php /tmp/wordpress/wp-config.php
+
+EXPOSE 9000
