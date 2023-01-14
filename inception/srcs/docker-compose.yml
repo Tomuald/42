@@ -3,7 +3,7 @@ version: '3'
 services:
   nginx:
     container_name: nginx
-    build: ./nginx
+    build: ./srcs/requirements/nginx/
     ports:
       - 443:443
     volumes:
