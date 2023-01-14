@@ -6,6 +6,8 @@ services:
     build: ./nginx
     ports:
       - 443:443
+    volumes:
+      wordpress_data:/var/www/html/
     networks:
       - network
 
@@ -13,7 +15,7 @@ services:
     container_name: mariadb
     build: ./requirements/mariadb
     volumes:
-      - mariadb_data:/var/lib/mariadb
+      - mariadb_data:/var/lib/mariadb/
     networks:
       - network
     env_file:
@@ -32,6 +34,20 @@ services:
       - wordpress_data:/var/www/html/
     networks:
       - network
+
+volumes:
+  mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/tgarriss/data/mariadb
+      o: bind
+  wordpress_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/tgarriss/data/wordpress
+      o: bind
 
 networks:
   network:

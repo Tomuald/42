@@ -2,6 +2,8 @@
 #+PROPERTY: header-args :noweb yes
 DEADLINE: <2023-02-05 Sun>
 
+#+GITHUB: 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
+
 The purpose of this project is to create a LEMP infrastructure of
 Docker services. LEMP refers to a collection of open-source software
 that is commonly used together to serve web applications. The term
@@ -28,7 +30,8 @@ Some useful links for the project:
   - [[#nginx][nginx]]
   - [[#wordpress][wordpress]]
   - [[#mariadb][mariadb]]
-  - [[#network][network]]
+  - [[#docker-compose-network][docker-compose network]]
+  - [[#docker-compose-volumes][docker-compose volumes]]
 
 * Requirements
 *Rules:*
@@ -208,6 +211,8 @@ services:
     build: ./nginx
     ports:
       - 443:443
+    volumes:
+      wordpress_data:/var/www/html/
     networks:
       - network
 #+end_src
@@ -399,6 +404,7 @@ In order to configure wordpress programatically (this needs to be done
 because you'll be booting up a new instance of your containers every
 time, and don't wanna go through the install process manually), you'll
 need to use ~wp core / wp cli~. Check out [[https://developer.wordpress.org/cli/commands/core/install/][this tutorial]].
+
 ** mariadb
 mariadb is necessary for wordpress to function properly. I've been
 trying to chunk this down into managable pieces, but it's all
@@ -411,7 +417,7 @@ connected together.
     container_name: mariadb
     build: ./requirements/mariadb
     volumes:
-      - mariadb_data:/var/lib/mariadb
+      - mariadb_data:/var/lib/mariadb/
     networks:
       - network
     env_file:
@@ -422,12 +428,29 @@ connected together.
 #+begin_src dockerfile
 ...
 #+end_src
-** network
+** docker-compose network
 #+name: network-compose
 #+begin_src docker-compose
 networks:
   network:
     driver: bridge
+#+end_src
+** docker-compose volumes
+#+name: volume-compose
+#+begin_src docker-compose
+volumes:
+  mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/tgarriss/data/mariadb
+      o: bind
+  wordpress_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/tgarriss/data/wordpress
+      o: bind
 #+end_src
 * Production :noexport:
 ** docker-compose
@@ -439,6 +462,8 @@ networks:
 <<mariadb-compose>>
 
 <<wordpress-compose>>
+
+<<volume-compose>>
 
 <<network-compose>>
 #+end_src
