@@ -212,7 +212,7 @@ services:
     ports:
       - 443:443
     volumes:
-      wordpress_data:/var/www/html/
+      - wordpress_data:/var/www/html/
     networks:
       - network
 #+end_src
