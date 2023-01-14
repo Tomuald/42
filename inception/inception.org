@@ -223,6 +223,7 @@ spins up the nginx container.
 
 *** docker-network
 See this [[https://www.aquasec.com/cloud-native-academy/docker-container/docker-networking/][aqua tutorial]], and the links at the bottom of the page.
+
 ** environment variables setup
 Sensitive data used by the db and wordpress should be kept safely
 stored in a ~.env~ file.
@@ -423,10 +424,12 @@ connected together.
     env_file:
       - .env
 #+end_src
-
+*** mariadb dockerfile
 #+name: db-dockerfile-dev
 #+begin_src dockerfile
-...
+FROM debian:buster
+
+RUN apt-get update
 #+end_src
 ** docker-compose network
 #+name: network-compose
