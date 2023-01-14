@@ -486,7 +486,7 @@ volumes:
 #+end_src
 
 #+name: db-dockerfile
-#+header: :tangle ./srcs/requirements/wordpress/Dockerfile
+#+header: :tangle ./srcs/requirements/mariadb/Dockerfile
 #+header: :noweb yes
 #+begin_src dockerfile
 <<db-dockerfile-dev>>
