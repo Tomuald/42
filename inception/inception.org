@@ -427,6 +427,16 @@ mariadb is necessary for wordpress to function properly. I've been
 trying to chunk this down into managable pieces, but it's all
 connected together.
 
+Volumes (see the code block below) are directories in the host system
+(meaning your linux VM; you need to create them manually, otherwise
+the docker-compose build will fail with a "no such file or directory"
+error) that can be accessed by any number of containers. Usually,
+ 1) the data directory: to prevent data loss when a container is
+    created, replaced, or deleted.
+ 2) the logs directory
+ 3) the config directory: since containers have no editors installed,
+    you use your VM to modify these files.
+
 *** mariadb docker-compose
 #+name: mariadb-compose
 #+begin_src docker-compose
@@ -439,13 +449,46 @@ connected together.
       - network
     env_file:
       - .env
+    ports:
+      - 3306:3306
 #+end_src
-*** mariadb dockerfile
+*** COMMENT mariadb dockerfile
+To manage the configuration of the db, use a bash script, this allows
+you to programatically set up the mysql_secure_installation process.
 #+name: db-dockerfile-dev
 #+begin_src dockerfile
 FROM debian:buster
 
-RUN apt-get update
+RUN apt-get -y update
+RUN apt-get -y install mariadb-server
+RUN apt-get -y install mysql_secure_installation
+
+RUN mkdir -p /var/run/mysqld \
+  && chown -R mysql:mysql /var/run/mysqld \
+  && chmod 777 /var/run/mysqld
+
+COPY ./tools/db_install.sh /usr/local/bin/
+
+RUN chmod +x /usr/local/bin/db_install.sh
+
+ENTRYPOINT ["/usr/local/bin/db_install.sh"]
+EXPOSE 3306
+
+CMD ["mysqld", "--bind-address=0.0.0.0"]
+#+end_src
+
+#+name: db-install
+#+header: :tangle ./srcs/requirements/mariadb/tools/db_install.sh
+#+begin_src bash
+mysql_secure_installation << _EOF_
+                          Y
+                          Rootp4ss
+                          Rootp4ss
+                          Y
+                          N
+                          Y
+                          Y
+_EOF_
 #+end_src
 ** docker-compose network
 #+name: network-compose

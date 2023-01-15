@@ -20,6 +20,8 @@ services:
       - network
     env_file:
       - .env
+    ports:
+      - 3306:3306
 
   wordpress:
     container_name: wordpress
