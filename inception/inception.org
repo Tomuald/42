@@ -2,7 +2,7 @@
 #+PROPERTY: header-args :noweb yes
 DEADLINE: <2023-02-05 Sun>
 
-#+GITHUB: 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
+#+GITHUB: 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
 
 The purpose of this project is to create a LEMP infrastructure of
 Docker services. LEMP refers to a collection of open-source software
@@ -452,7 +452,7 @@ error) that can be accessed by any number of containers. Usually,
     ports:
       - 3306:3306
 #+end_src
-*** COMMENT mariadb dockerfile
+*** mariadb dockerfile
 To manage the configuration of the db, use a bash script, this allows
 you to programatically set up the mysql_secure_installation process.
 #+name: db-dockerfile-dev
@@ -478,16 +478,16 @@ CMD ["mysqld", "--bind-address=0.0.0.0"]
 #+end_src
 
 #+name: db-install
-#+header: :tangle ./srcs/requirements/mariadb/tools/db_install.sh
+#+header: :tangle ./srcs/requirements/mariadb/tools/db_install.sh :mkdirp yes
 #+begin_src bash
 mysql_secure_installation << _EOF_
-                          Y
-                          Rootp4ss
-                          Rootp4ss
-                          Y
-                          N
-                          Y
-                          Y
+Y
+Rootp4ss
+Rootp4ss
+Y
+n
+Y
+Y
 _EOF_
 #+end_src
 ** docker-compose network
