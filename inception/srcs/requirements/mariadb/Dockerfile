@@ -2,7 +2,6 @@ FROM debian:buster
 
 RUN apt-get -y update
 RUN apt-get -y install mariadb-server
-RUN apt-get -y install mysql_secure_installation
 
 RUN mkdir -p /var/run/mysqld \
   && chown -R mysql:mysql /var/run/mysqld \

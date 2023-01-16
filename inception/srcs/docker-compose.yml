@@ -10,6 +10,7 @@ services:
       - /home/tgarriss/wordpress_data:/var/www/html/
     networks:
       - network
+    restart: always
 
   mariadb:
     container_name: mariadb
@@ -22,6 +23,7 @@ services:
       - .env
     ports:
       - 3306:3306
+    restart: always
 
   wordpress:
     container_name: wordpress
@@ -34,6 +36,7 @@ services:
       - /home/tgarriss/wordpress_data:/var/www/html/
     networks:
       - network
+    restart: always
 
 volumes:
   mariadb_data:
