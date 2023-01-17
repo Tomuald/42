@@ -1,0 +1,346 @@
+#+title: Basic
+
+All right... So. I still need to understand other things before I can
+start configuring my containers. I now realize that I understand too
+little of mariadb and wordpress to do it all at once.
+
+I'll start by installing everything on my VM to see how that works
+out, and, hopefully, gain a little bit of insight into things. So
+let's restart from here.
+
+This setup was tested, even with SSL, and everything works with NO
+issues! Next steps... Replicating this method with Docker containers.
+There'll be a few things to adjust, namely:
+ 1) using scripts for installation (maybe)
+ 2) using input redirection from files for configuring stuff
+ 3) copying config files from within the Dockerfile
+ 4) setting up a clean repo that can be cloned for eval
+
+Most of the connections between the containers
+should hold up from the docker-compose.yml I created previously.
+
+* Installing a Debian 11 LEMP stack
+** Installing VM
+The part about installing the VM has been covered extensively in the
+[[file:inception.org][inception.org]] file. Refer to that for more information.
+
+For a more secure installing, consider enabling a firewall, and
+allowing ports 22, 443, 3306, and 9000.
+
+** Installing nginx
+First, update the apt repo, and install nginx. As easy as:
+
+#+begin_src bash
+sudo apt-get -y update
+sudo apt-get -y install nginx
+#+end_src
+
+If you've installed ufw, allow port 443. ~sudo ufw allow 'Nginx
+HTTPS'~.
+
+Check if your server is up and running:
+1) ~ip addr show eth0 | grep inet | awk '{ print $2; }' | sed 's/\/.*$//'~
+2) try every address in a web browser. It should take you to the
+   default nginx landing page.
+** Installing mariadb
+To install mariadb, use the ~mariadb~ [[https://en.wiktionary.org/wiki/metapackage][metapackage]].
+
+#+begin_src bash
+sudo apt-get -y install mariadb-server
+sudo mysql_secure_installation
+#+end_src
+
+The ~mysql_secure_installation~ script removes some insecure default
+settings, and locks down access to your database system; it comes
+pre-installed with ~mariadb-server~. The script...
+ 1) removes anonymous users, and the test database
+ 2) disables remote root login
+ 3) loads new rules that applies the changes made
+
+Connect to the database console to configure the database:
+#+begin_src bash
+sudo mariadb
+#+end_src
+
+Notice that you can login without a root password. By default, that's
+how mariadb works; it uses ~unix_socket~ instead of ~password~ for the
+administrative user. This makes the database more secure because it
+allows only the system users with sudo privileges to log in as the
+administrative mariadb user. Although, be aware that you won't be able
+to connect as root through your PHP application.
+
+To further increase security, it is wise to setup dedicated user
+accounts with fewer rights. You can create this with the following
+code, from within the mariadb console.
+
+#+begin_src sql
+CREATE DATABASE example_database;
+/* Create a new user and grant it full privileges on the example-database db */
+GRANT ALL ON example_database.* TO 'example_user'@'localhost' IDENTIFIED BY 'password' WITH GRANT OPTION;
+/* Flushing privileges means applying them */
+FLUSH PRIVILEGES;
+exit
+#+end_src
+
+Check if this worked by logging as the created user:
+#+begin_src bash
+mariadb -u example_user -p
+#+end_src
+
+Then, check which databases your user has access to:
+#+begin_src sql
+SHOW DATABASES;
+#+end_src
+
+** Installing php
+PHP processes code and generates dynamic content for a web server.
+Nginx requires an external program to handle PHP processing, and act
+as a bridge between the PHP interpreter and the web server. This
+offers better performance, but necessitates further configuration in
+nginx. You'll need to install ~php-fpm~ (processes nginx php requests)
+and ~php-mysql~ (allows PHP to communicate with mysql-based
+databases). Run:
+
+#+begin_src bash
+sudo apt-get -y install php-fpm php-mysql
+#+end_src
+** Configuring nginx for PHP
+By default, nginx has one server block enabled to serve documents from
+~/var/www/html/~. That's fine, but it becomes unwieldy to manage when
+you're hosting multiple websites. If a client request doesn't match a
+location in your server, it'll fall back on ~/var/www/html/~.
+
+Create the root web directory for your domain, and assign ownership of
+it to your user:
+#+begin_src bash
+sudo mkdir /var/www/<your_domain>/
+sudo chown -R $USER:$USER /var/www/<your_domain>/
+#+end_src
+
+Create a file in nginx's sites-available directory
+(/etc/nginx/sites-available/<your_domain>), and add the following:
+
+#+begin_src text
+server {
+    listen 80;
+    listen [::]:80;
+
+    root /var/www/<your_domain>;
+    index index.php index.html index.htm;
+
+    server_name your_domain;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php7.3-fpm.sock;
+    }
+}
+#+end_src
+
+:HTTPS_ALTERNATIVE:
+Create your ssl keys:
+#+begin_src bash
+sudo mkdir /etc/nginx/ssl/
+sudo openssl req -x509 -nodes -days 365 \
+        -newkey rsa:2048 \
+        -keyout /etc/nginx/ssl/tgarriss.key \
+        -out /etc/nginx/ssl/tgarriss.csr \
+        -subj "/C=CA/ST=QC/L=Thomas/O=42Quebec/OU=tgarriss/CN=tgarriss"
+#+end_src
+
+#+begin_src bash
+server {
+  # ssl specifies that it should use ssl
+  listen 443 ssl;
+  # the [::]: means any ipv6 addr
+  listen [::]:443 ssl;
+  server_name tgarriss.42.fr;
+
+  # sets the cert/key pair and enables TLS
+  ssl_certificate /etc/nginx/ssl/tgarriss.csr;
+  ssl_certificate_key /etc/nginx/ssl/tgarriss.key;
+  ssl_protocols TLSv1.2 TLSv1.3;
+
+  # ...
+}
+#+end_src
+
+:END:
+
+Activate your new configuration by linking the config file to nginx's
+sites-enabled:
+#+begin_src bash
+sudo ln -s /etc/nginx/sites-available/<your_domain> /etc/nginx/sites-enabled/
+sudo nginx -t # tests for syntax errors in your config files
+sudo systemctl reload nginx # how will I manage this in docker... ?
+#+end_src
+
+Now that you're setup, you can create a php file for testing! Add a
+php file at your document root, and access it from your web browser.
+
+#+begin_src bash
+nano /var/www/<your_domain>/info.php
+#+end_src
+
+#+begin_src text
+<?php
+phpinfo();
+?>
+#+end_src
+
+You should also check if PHP is able to connect to your mariadb
+database, and execute queries.
+
+First, connect to the db:
+#+begin_src bash
+mariadb -u example_user -p
+#+end_src
+
+#+begin_src sql
+CREATE TABLE example_database.todo_list (
+	item_id INT AUTO_INCREMENT,
+	content VARCHAR(255),
+	PRIMARY KEY(item_id)
+);
+INSERT INTO example_database.todo_list (content) VALUES ("My first important item");
+SELECT * FROM example_database.todo_list;
+#+end_src
+
+Now, add a PHP script that connects to your db, and queries for
+content.
+
+#+begin_src bash
+nano /var/www/your_domain/todo_list.php
+#+end_src
+
+#+begin_src php
+<?php
+$user = "example_user";
+$password = "password";
+$database = "example_database";
+$table = "todo_list";
+
+try {
+  $db = new PDO("mysql:host=localhost;dbname=$database", $user, $password);
+  echo "<h2>TODO</h2><ol>";
+  foreach($db->query("SELECT content FROM $table") as $row) {
+    echo "<li>" . $row['content'] . "</li>";
+  }
+  echo "</ol>";
+} catch (PDOException $e) {
+    print "Error!: " . $e->getMessage() . "<br/>";
+    die();
+}
+#+end_src
+
+Navigate to your domain, and if it worked, you'll see your todo list!
+** Installing wordpress
+Wordpress needs a mysql-based database to store and manage website and
+user information. You'll create a new database within the mariadb
+instance you set up earlier.
+
+Log into the mariadb console:
+#+begin_src bash
+sudo mariadb
+#+end_src
+
+Then, set the following configuration:
+#+begin_src sql
+CREATE DATABASE wordpress DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
+GRANT ALL ON wordpress.* TO 'wordpress_user'@'localhost' IDENTIFIED BY 'password';
+FLUSH PRIVILEGES;
+exit;
+#+end_src
+
+During the preceding setup, we installed a very minimal set of
+extensions in order to communicate between PHP and mariadb. Wordpress
+requires a few more.
+
+#+begin_src bash
+sudo apt-get -y update
+sudo apt-get -y install php-curl php-gd php-intl php-mbstring php-soap php-xml php-xmlrpc php-zip
+sudo systemctl restart php7.3-fpm.service
+#+end_src
+
+Nginx also requires some further configuration. Open the configuration
+file we created earlier, ~/etc/nginx/sites-available/<your_domain>~.
+
+Add these clauses within your server block:
+#+begin_src text
+server {
+    location = /favicon.ico { log_not_found off; access_log off; }
+    location = /robots.txt { log_not_found off; access_log off; allow all; }
+    location ~* \.(css|gif|ico|jpeg|jpg|js|png)$ {
+        expires max;
+        log_not_found off;
+    }
+}
+#+end_src
+
+And modify the existing location block. Change:
+#+begin_src text
+server {
+    location / {
+        # try_files $uri $uri/ =404; # remove this!
+        try_files $uri $uri/ /index.php$is_args$args; # add this!
+    }
+}
+#+end_src
+
+Check if the config files are setup properly, and reload: ~sudo nginx
+-t && sudo systemctl reload nginx~.
+
+Now. Download the latest version of wordpress.
+#+begin_src bash
+cd /tmp
+curl -LO https://wordpress.org/latest.tar.gz
+tar -xzvf latest.tar.gz
+# rename the config file needed for wordpress
+cp /tmp/wordpress/wp-config-sample.php /tmp/wordpress/wp-config.php
+# move everything to your document root
+sudo cp -a /tmp/wordpress/. /var/www/<your_domain>
+# assign ownership to the www-data user and group
+# nginx uses these to read and write permissions to serve the website
+sudo chown -R www-data:www-data /var/www/<your_domain>
+#+end_src
+
+There's some additional configuration to be made for security.
+
+First, download the wordpress secret key generator.
+#+begin_src bash
+curl -s https://api.wordpress.org/secret-key/1.1/salt/
+#+end_src
+
+Copy the output, and paste it into your ~wp-config.php~ file. It
+should look something like this:
+#+begin_src text
+define('AUTH_KEY',         'put your unique phrase here');
+define('SECURE_AUTH_KEY',  'put your unique phrase here');
+define('LOGGED_IN_KEY',    'put your unique phrase here');
+define('NONCE_KEY',        'put your unique phrase here');
+define('AUTH_SALT',        'put your unique phrase here');
+define('SECURE_AUTH_SALT', 'put your unique phrase here');
+define('LOGGED_IN_SALT',   'put your unique phrase here');
+define('NONCE_SALT',       'put your unique phrase here');
+#+end_src
+
+At the beginning of the file, set up how you connect to the database:
+#+begin_src text
+
+define('DB_NAME', 'wordpress');
+
+/** MySQL database username */
+define('DB_USER', 'wordpress_user');
+
+/** MySQL database password */
+define('DB_PASSWORD', 'password');
+
+define('FS_METHOD', 'direct');
+#+end_src
+
+Now, everything should work cleanly. Navigate to your domain, and
+complete the wordpress setup with the GUI.

@@ -429,7 +429,7 @@ FROM debian:buster
 
 RUN apt-get -y update && apt-get -y install php-fpm php-mysql
 
-RUN adduser -S nginx && addgroup -s nginx
+RUN adduser -S nginx && addgroup -S nginx
 COPY conf/www.conf /etc/php/7.3/fpm/pool.d
 
 RUN mkdir /tmp/
