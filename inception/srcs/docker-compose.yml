@@ -29,7 +29,9 @@ services:
     container_name: wordpress
     depends_on:
       - mariadb
-    build: ./srcs/requirements/wordpress/
+      build: ./srcs/requirements/wordpress/
+    ports:
+      - 9000:9000
     env_file:
       - .env
     volumes:

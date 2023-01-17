@@ -1,12 +1,18 @@
 FROM debian:buster
 
 RUN apt-get -y update && apt-get -y install php-fpm php-mysql
-RUN apt-get -y install curl
-WORKDIR /tmp/
-RUN curl -LO https://wordpress.org/latest.tar.gz
-RUN tar -xzvf latest.tar.gz
-RUN cp /tmp/wordpress/wp-config-sample.php /tmp/wordpress/wp-config.php
 
-COPY ./conf/www.conf /etc/php/7.3/pool.d/
+RUN adduser -S nginx && addgroup -s nginx
+COPY conf/www.conf /etc/php/7.3/fpm/pool.d
 
-EXPOSE 9000
+COPY conf/index/html /tmp/index.html
+
+RUN wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+RUN chmod +x wp-cli.phar
+RUN cp wp-cli.phar /usr/bin/wp
+
+WORKDIR /var/www/html/wordpress
+
+COPY tools/configure.sh /tmp/configure.sh
+
+ENTRYPOINT ["sh", "/tmp/configure.sh"]

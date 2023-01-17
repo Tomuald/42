@@ -2,7 +2,7 @@
 #+PROPERTY: header-args :noweb yes
 DEADLINE: <2023-02-05 Sun>
 
-#+GITHUB: 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
+#+GITHUB: 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
 
 The purpose of this project is to create a LEMP infrastructure of
 Docker services. LEMP refers to a collection of open-source software
@@ -17,6 +17,7 @@ Some useful links for the project:
     1) [[https://github.com/NEKuipers/Inception/blob/master/Inception_guide.txt][NEKuipers]]
     2) [[https://github.com/vbachele/Inception][vbachele]]
     3) [[https://github.com/twagger/inception][twagger]]
+    4) [[https://github.com/raccoman/inception/blob/main/srcs/requirements/wordpress/Dockerfile][raccoman]]
  2) Ressources
     1) [[https://kapeli.com/cheat_sheets/Dockerfile.docset/Contents/Resources/Documents/index][docker cheatsheet]]
     2) [[https://discord.com/channels/831591290311409738/964254222105346048][additional links]]
@@ -236,9 +237,22 @@ stored in a ~.env~ file.
 In your root directory, add the following file:
 #+name: .env-config-dev
 #+begin_src text
-MYSQL_ROOT_PASSWORD=inception
-MYSQL_USER=tgarriss
-MYSQL_PASSWORD=tgarriss
+MYSQL_HOST=mariadb
+MYSQL_ROOT_PWD=rootpassword
+
+WP_DATABASE_NAME=wordpress
+WP_DATABASE_USR=tgarriss
+WP_DATABASE_PWD=tgarriss
+
+DOMAIN_NAME=localhost
+
+WP_TITLE=Inception
+WP_ADMIN_USR=tomg
+WP_ADMIN_PWD=tomg
+WP_ADMIN_EMAIL=tomg@gmail.com
+WP_USR=tgarriss
+WP_PWD=tgarriss
+WP_EMAIL=tgarriss@gmail.com
 #+end_src
 
 Make sure that you ignore this file in both your ~.gitignore~ and
@@ -384,6 +398,9 @@ Wordpress is a content management system (CMS). It requires a web
 server (nginx), a database (mariadb), and PHP (php-fpm) in order to
 function.
 
+Remember that you can pass args to a program that takes arguments with
+a file, i.e. "program < file".
+
 *** wordpress docker-compose
 #+name: wordpress-compose
 #+begin_src docker-compose
@@ -391,7 +408,9 @@ function.
     container_name: wordpress
     depends_on:
       - mariadb
-    build: ./srcs/requirements/wordpress/
+      build: ./srcs/requirements/wordpress/
+    ports:
+      - 9000:9000
     env_file:
       - .env
     volumes:
@@ -409,26 +428,51 @@ Now for the wordpress Dockerfile...
 FROM debian:buster
 
 RUN apt-get -y update && apt-get -y install php-fpm php-mysql
-RUN apt-get -y install curl
-WORKDIR /tmp/
-RUN curl -LO https://wordpress.org/latest.tar.gz
-RUN tar -xzvf latest.tar.gz
-RUN cp /tmp/wordpress/wp-config-sample.php /tmp/wordpress/wp-config.php
 
-COPY ./conf/www.conf /etc/php/7.3/pool.d/
+RUN adduser -S nginx && addgroup -s nginx
+COPY conf/www.conf /etc/php/7.3/fpm/pool.d
 
-EXPOSE 9000
+COPY conf/index/html /tmp/index.html
+
+RUN wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+RUN chmod +x wp-cli.phar
+RUN cp wp-cli.phar /usr/bin/wp
+
+WORKDIR /var/www/html/wordpress
+
+COPY tools/configure.sh /tmp/configure.sh
+
+ENTRYPOINT ["sh", "/tmp/configure.sh"]
 #+end_src
 
-In order to configure wordpress programatically (this needs to be done
-because you'll be booting up a new instance of your containers every
-time, and don't wanna go through the install process manually), you'll
-need to use ~wp core / wp cli~. Check out [[https://developer.wordpress.org/cli/commands/core/install/][this tutorial]], this [[https://developer.wordpress.org/cli/commands/core/install/][wp-core]]
-docs, this [[https://developer.wordpress.org/cli/commands/user/create/][wp-user]], or this [[https://stackoverflow.com/questions/73744266/install-wordpress-with-cli-in-docker-gives-error-establishing-database-connecti][stackoverflow]] thread.
+#+begin_src bash
+#!/bin/sh
+# wait for mysql
+while ! mariadb -h$MYSQL_HOST -u$WP_DATABASE_USR -p$WP_DATABASE_PWD $WP_DATABASE_NAME &>/dev/null; do
+    sleep 3
+done
 
-All right, after some searching, wp core seems to install wp by
-itself. This might be way easier than doing the manual install... The
-rest might be configured by docker-compose and the like...
+if [ ! -f "/var/www/html/index.html" ]; then
+
+    # static website
+    mv /tmp/index.html /var/www/html/index.html
+
+    # adminer
+    wget https://github.com/vrana/adminer/releases/download/v4.8.1/adminer-4.8.1-mysql-en.php -O /var/www/html/adminer.php &> /dev/null
+    wget https://raw.githubusercontent.com/Niyko/Hydra-Dark-Theme-for-Adminer/master/adminer.css -O /var/www/html/adminer.css &> /dev/null
+
+    wp core download --allow-root
+    wp config create --dbname=$WP_DATABASE_NAME --dbuser=$WP_DATABASE_USR --dbpass=$WP_DATABASE_PWD --dbhost=$MYSQL_HOST --dbcharset="utf8" --dbcollate="utf8_general_ci" --allow-root
+    wp core install --url=$DOMAIN_NAME/wordpress --title=$WP_TITLE --admin_user=$WP_ADMIN_USR --admin_password=$WP_ADMIN_PWD --admin_email=$WP_ADMIN_EMAIL --skip-email --allow-root
+    wp user create $WP_USR $WP_EMAIL --role=author --user_pass=$WP_PWD --allow-root
+    wp theme install inspiro --activate --allow-root
+
+fi
+
+echo "Wordpress started on :9000"
+/usr/sbin/php-fpm7 -F -R
+#+end_src
+
 
 ** mariadb
 mariadb is necessary for wordpress to function properly. I've been
@@ -469,25 +513,21 @@ you to programatically set up the mysql_secure_installation process.
 FROM debian:buster
 
 RUN apt-get -y update
-RUN apt-get -y install mariadb-server
+RUN apt-get -y install mariadb-server mariadb-client
 
-RUN mkdir -p /var/run/mysqld \
-  && chown -R mysql:mysql /var/run/mysqld \
-  && chmod 777 /var/run/mysqld
 
-COPY ./tools/db_install.sh /usr/local/bin/
 
-RUN chmod +x /usr/local/bin/db_install.sh
-
-ENTRYPOINT ["/usr/local/bin/db_install.sh"]
 EXPOSE 3306
 
 CMD ["mysqld", "--bind-address=0.0.0.0"]
 #+end_src
 
+Always remember to put ~#!/bin/bash~ at the top of your scripts.
+
 #+name: db-install
 #+header: :tangle ./srcs/requirements/mariadb/tools/db_install.sh :mkdirp yes
 #+begin_src bash
+
 mysql_secure_installation << _EOF_
 Y
 Rootp4ss
@@ -623,7 +663,7 @@ clean:
 ** www conf
 #+name: www-conf
 #+header: :tangle ./srcs/requirements/wordpress/conf/www.conf :mkdirp yes
-#+begin_src text
+#+begin_src
 ; Start a new pool named 'www'.
 ; the variable $pool can be used in any directive and will be replaced by the
 ; pool name ('www' here)
@@ -646,8 +686,8 @@ clean:
 ; Unix user/group of processes
 ; Note: The user is mandatory. If the group is not set, the default user's group
 ;       will be used.
-user = www-data
-group = www-data
+user = nginx
+group = nginx
 
 ; The address on which to accept FastCGI requests.
 ; Valid syntaxes are:
@@ -659,7 +699,7 @@ group = www-data
 ;                            (IPv6 and IPv4-mapped) on a specific port;
 ;   '/path/to/unix/socket' - to listen on a unix socket.
 ; Note: This value is mandatory.
-listen = 0.0.0.0:9000
+listen = 9000
 
 ; Set listen(2) backlog.
 ; Default Value: 511 (-1 on FreeBSD and OpenBSD)
@@ -671,8 +711,8 @@ listen = 0.0.0.0:9000
 ; and group can be specified either by name or by their numeric IDs.
 ; Default Values: user and group are set as the running user
 ;                 mode is set to 0660
-listen.owner = www-data
-listen.group = www-data
+;listen.owner = nobody
+;listen.group = nobody
 ;listen.mode = 0660
 ; When POSIX Access Control Lists are supported you can set them using
 ; these options, value is a comma separated list of user/group names.
@@ -737,12 +777,12 @@ pm = dynamic
 ; forget to tweak pm.* to fit your needs.
 ; Note: Used when pm is set to 'static', 'dynamic' or 'ondemand'
 ; Note: This value is mandatory.
-pm.max_children = 25
+pm.max_children = 5
 
 ; The number of child processes created on startup.
 ; Note: Used only when pm is set to 'dynamic'
-; Default Value: min_spare_servers + (max_spare_servers - min_spare_servers) / 2
-pm.start_servers = 5
+; Default Value: (min_spare_servers + max_spare_servers) / 2
+pm.start_servers = 2
 
 ; The desired minimum number of idle server processes.
 ; Note: Used only when pm is set to 'dynamic'
@@ -752,7 +792,7 @@ pm.min_spare_servers = 1
 ; The desired maximum number of idle server processes.
 ; Note: Used only when pm is set to 'dynamic'
 ; Note: Mandatory when pm is set to 'dynamic'
-pm.max_spare_servers = 10
+pm.max_spare_servers = 3
 
 ; The number of seconds after which an idle process will be killed.
 ; Note: Used only when pm is set to 'ondemand'
@@ -856,7 +896,7 @@ pm.max_spare_servers = 10
 ;   last request memory:  0
 ;
 ; Note: There is a real-time FPM status monitoring sample web page available
-;       It's available in: /usr/share/php/7.3/fpm/status.html
+;       It's available in: /usr/share/php7/fpm/status.html
 ;
 ; Note: The value must start with a leading slash (/). The value can be
 ;       anything, but it may not be a good idea to use the .php extension or it
@@ -883,7 +923,7 @@ pm.max_spare_servers = 10
 
 ; The access log file
 ; Default: not set
-;access.log = log/$pool.access.log
+;access.log = log/php7/$pool.access.log
 
 ; The access log format.
 ; The following syntax is allowed
@@ -947,7 +987,7 @@ pm.max_spare_servers = 10
 ; The log file for slow requests
 ; Default Value: not set
 ; Note: slowlog is mandatory if request_slowlog_timeout is set
-;slowlog = log/$pool.log.slow
+;slowlog = log/php7/$pool.slow.log
 
 ; The timeout for serving a single request after which a PHP backtrace will be
 ; dumped to the 'slowlog' file. A value of '0s' means 'off'.
@@ -1060,7 +1100,96 @@ pm.max_spare_servers = 10
 ;                specified at startup with the -d argument
 ;php_admin_value[sendmail_path] = /usr/sbin/sendmail -t -i -f www@my.domain.com
 ;php_flag[display_errors] = off
-;php_admin_value[error_log] = /var/log/fpm-php.www.log
+;php_admin_value[error_log] = /var/log/php7/$pool.error.log
 ;php_admin_flag[log_errors] = on
 ;php_admin_value[memory_limit] = 32M
+#+end_src
+** wordpress-html
+#+name: wordpress-html
+#+header: :tangle ./srcs/requirements/wordpress/index.html
+#+begin_src html
+<!doctype html>
+<html>
+  <head>
+    <title>Inception</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <p align="center">
+        <img src="https://img.shields.io/github/contributors/raccoman/inception?style=for-the-badge"/>
+        <img src="https://img.shields.io/github/forks/raccoman/inception?style=for-the-badge"/>
+        <img src="https://img.shields.io/github/stars/raccoman/inception?style=for-the-badge"/>
+        <img src="https://img.shields.io/github/issues/raccoman/inception?style=for-the-badge"/>
+        <img src="https://img.shields.io/github/license/raccoman/inception?style=for-the-badge"/>
+      </p>
+
+      <p align="center">
+        <img src="https://badge42.herokuapp.com/api/stats/raccoman?privacyEmail=true"/>
+      </p>
+      <h3 align="center">
+        INCEPTION
+      </h3>
+      <p align="center">
+        This project aims to broaden your knowledge of system administration by using Docker
+      </p>
+
+      <h2 align="center">
+        Evaluation
+      </h2>
+      <p align="center">
+
+        <a href="wordpress/index.php">
+            <button>WORDPRESS</button>
+        </a>
+
+        <a href="adminer.php">
+            <button>ADMINER</button>
+        </a>
+
+        <a href="https://localhost:9443">
+          <button>PORTAINER</button>
+        </a>
+
+      </p>
+
+      <h2 align="center">
+        Contact
+      </h2>
+      <p align="center">
+        This is my inception project from the 42 cursus, need help: raccoman@student.42roma.it
+      </p>
+
+      <p align="center">
+          <img src="https://forthebadge.com/images/badges/made-with-c.svg"/>
+          <img src="https://forthebadge.com/images/badges/not-a-bug-a-feature.svg"/>
+      </p>
+  </body>
+  <style>
+
+    body {
+        font-family: 'Poppins', sans-serif;
+        background-color: rgb(12, 17, 23);
+        color: white;
+    }
+
+    a, u {
+        text-decoration: none;
+    }
+
+    button {
+        border: none;
+        background-color: rgb(34, 104, 186);
+        color: white;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 12px;
+        cursor: pointer;
+    }
+
+  </style>
+</html>
 #+end_src
