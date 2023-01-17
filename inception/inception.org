@@ -432,7 +432,7 @@ RUN apt-get -y update && apt-get -y install php-fpm php-mysql
 RUN adduser -S nginx && addgroup -s nginx
 COPY conf/www.conf /etc/php/7.3/fpm/pool.d
 
-COPY conf/index/html /tmp/index.html
+COPY conf/index.html /tmp/index.html
 
 RUN wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
 RUN chmod +x wp-cli.phar
@@ -445,6 +445,8 @@ COPY tools/configure.sh /tmp/configure.sh
 ENTRYPOINT ["sh", "/tmp/configure.sh"]
 #+end_src
 
+#+name: configure-wordpress
+#+header: :tangle ./srcs/requirements/wordpress/tools.conf
 #+begin_src bash
 #!/bin/sh
 # wait for mysql
@@ -1106,7 +1108,7 @@ pm.max_spare_servers = 3
 #+end_src
 ** wordpress-html
 #+name: wordpress-html
-#+header: :tangle ./srcs/requirements/wordpress/index.html
+#+header: :tangle ./srcs/requirements/wordpress/conf/index.html
 #+begin_src html
 <!doctype html>
 <html>
