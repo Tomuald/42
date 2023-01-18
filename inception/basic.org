@@ -25,7 +25,7 @@ The part about installing the VM has been covered extensively in the
 [[file:inception.org][inception.org]] file. Refer to that for more information.
 
 For a more secure installing, consider enabling a firewall, and
-allowing ports 22, 443, 3306, and 9000.
+allowing ports 22, 443, 3306, and 9000 (verify if this is true).
 
 ** Installing nginx
 First, update the apt repo, and install nginx. As easy as:

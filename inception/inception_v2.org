@@ -1,0 +1,92 @@
+#+title: Inception V2
+#+PROPERTY: header-args :noweb yes
+#+PROPERTY: header-args :mkdirp yes
+
+* nginx Docker
+#+name: nginx-docker
+#+header: :tangle ./srcs/requirements/nginx/Dockerfile
+#+header: :mkdirp yes
+#+begin_src dockerfile
+FROM debian:buster
+
+RUN apt-get -y update
+RUN apt-get -y install nginx
+RUN apt-get -y install php-fpm
+
+RUN mkdir /var/www/tgarriss.42.fr/
+RUN chown -R $USER:$USER /var/www/tgarriss.42.fr/
+
+RUN mkdir /etc/nginx/ssl/
+RUN openssl req -x509 -nodes -days 365 \
+        -newkey rsa:2048 \
+        -keyout /etc/nginx/ssl/tgarriss.key \
+        -out /etc/nginx/ssl/tgarriss.csr \
+        -subj "/C=CA/ST=QC/L=Thomas/O=42Quebec/OU=tgarriss/CN=tgarriss"
+
+COPY ./conf/tgarriss.42.fr /etc/nginx/sites-available/
+RUN ln -s /etc/nginx/sites-available/tgarriss.42.fr/ /etc/nginx/sites-enabled/
+EXPOSE 443
+
+ENTRYPOINT ["/usr/bin/nginx", "-g", "daemon off;"]
+#+end_src
+
+#+name: nginx-conf
+#+header: :tangle ./srcs/requirements/nginx/conf/tgarris.42.fr
+#+header: :mkdirp yes
+#+begin_src bash
+server {
+    listen 80;
+    listen [::]:80;
+
+    root /var/www/tgarriss.42.fr;
+    index index.php index.html index.htm;
+
+    server_name your_domain;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php7.3-fpm.sock;
+    }
+}
+#+end_src
+
+#+name: info-php
+#+header: :tangle ./srcs/requirements/nginx/conf/info.php
+#+header: :mkdirp yes
+#+begin_src php
+<?php
+phpinfo();
+?>
+#+end_src
+
+* mariadb Docker
+#+name: mariadb-dockerfile
+#+header: :tangle ./srcs/requirements/mariadb/Dockerfile
+#+header: :mkdirp yes
+#+begin_src dockerfile
+FROM debian:buster
+
+RUN apt-get -y update
+RUN apt-get -y install mariadb-server
+
+RUN mysql_secure_installation < "Y\npassword\npassword\nY\nn\nY\nY\n"
+RUN mariadb -u root < "db-config.sql"
+
+EXPOSE 3306
+
+ENTRYPOINT ["mysqld", "--bind-address=0.0.0.0"]
+#+end_src
+
+#+name: mariadb-config
+#+header: :tangle /srcs/requirements/mariadb/conf/db-config.sql
+#+header: :mkdirp yes
+#+begin_src sql
+CREATE DATABASE example_database;
+GRANT ALL ON example_database.* TO 'tgarriss'@'localhost' IDENTIFIED BY 'password' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+exit
+#+end_src
