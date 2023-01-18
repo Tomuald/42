@@ -15,7 +15,8 @@ RUN openssl req -x509 -nodes -days 365 \
         -subj "/C=CA/ST=QC/L=Thomas/O=42Quebec/OU=tgarriss/CN=tgarriss"
 
 COPY ./conf/tgarriss.42.fr /etc/nginx/sites-available/
-RUN ln -s /etc/nginx/sites-available/tgarriss.42.fr/ /etc/nginx/sites-enabled/
+COPY ./conf/info.php /var/www/tgarriss.42.fr/
+RUN cp /etc/nginx/sites-available/tgarriss.42.fr /etc/nginx/sites-enabled/
 EXPOSE 443
 
 ENTRYPOINT ["/usr/bin/nginx", "-g", "daemon off;"]

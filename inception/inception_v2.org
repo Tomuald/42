@@ -24,27 +24,39 @@ RUN openssl req -x509 -nodes -days 365 \
         -subj "/C=CA/ST=QC/L=Thomas/O=42Quebec/OU=tgarriss/CN=tgarriss"
 
 COPY ./conf/tgarriss.42.fr /etc/nginx/sites-available/
-RUN ln -s /etc/nginx/sites-available/tgarriss.42.fr/ /etc/nginx/sites-enabled/
+COPY ./conf/info.php /var/www/tgarriss.42.fr/
+RUN cp /etc/nginx/sites-available/tgarriss.42.fr /etc/nginx/sites-enabled/
 EXPOSE 443
 
 ENTRYPOINT ["/usr/bin/nginx", "-g", "daemon off;"]
 #+end_src
 
 #+name: nginx-conf
-#+header: :tangle ./srcs/requirements/nginx/conf/tgarris.42.fr
+#+header: :tangle ./srcs/requirements/nginx/conf/tgarriss.42.fr
 #+header: :mkdirp yes
 #+begin_src bash
 server {
-    listen 80;
-    listen [::]:80;
+    listen 443 ssl;
+    listen [::]:443 ssl;
 
-    root /var/www/tgarriss.42.fr;
+    root /var/www/<your_domain>;
     index index.php index.html index.htm;
 
-    server_name your_domain;
+    server_name tgarriss.42.fr;
+
+    ssl_certificate /etc/nginx/ssl/tgarriss.csr;
+    ssl_certificate_key /etc/nginx/ssl/tgarriss.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
 
     location / {
-        try_files $uri $uri/ =404;
+        try_files $uri $uri/ /index.php$is_args$args;
+    }
+
+    location = /favicon.ico { log_not_found off; access_log off; }
+    location = /robots.txt { log_not_found off; access_log off; allow all; }
+    location ~* \.(css|gif|ico|jpeg|jpg|js|png)$ {
+        expires max;
+        log_not_found off;
     }
 
     location ~ \.php$ {
@@ -52,15 +64,6 @@ server {
         fastcgi_pass unix:/var/run/php/php7.3-fpm.sock;
     }
 }
-#+end_src
-
-#+name: info-php
-#+header: :tangle ./srcs/requirements/nginx/conf/info.php
-#+header: :mkdirp yes
-#+begin_src php
-<?php
-phpinfo();
-?>
 #+end_src
 
 * mariadb Docker
@@ -82,11 +85,137 @@ ENTRYPOINT ["mysqld", "--bind-address=0.0.0.0"]
 #+end_src
 
 #+name: mariadb-config
-#+header: :tangle /srcs/requirements/mariadb/conf/db-config.sql
+#+header: :tangle ./srcs/requirements/mariadb/conf/db-config.sql
 #+header: :mkdirp yes
 #+begin_src sql
 CREATE DATABASE example_database;
 GRANT ALL ON example_database.* TO 'tgarriss'@'localhost' IDENTIFIED BY 'password' WITH GRANT OPTION;
 FLUSH PRIVILEGES;
+CREATE DATABASE wordpress DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
+GRANT ALL ON wordpress.* TO 'wordpress_user'@'localhost' IDENTIFIED BY 'password';
+FLUSH PRIVILEGES;
 exit
+#+end_src
+* wordpress Docker
+#+name: wordpress-dockerfile
+#+header: :tangle ./srcs/requirements/wordpress/Dockerfile
+#+header: :mkdirp yes
+#+begin_src dockerfile
+FROM debian:buster
+
+RUN apt-get -y update
+RUN apt-get -y install php-curl php-gd php-intl php-mbstring php-soap php-xml php-xmlrpc php-zip
+RUN apt-get -y install php-fpm php-mysql
+RUN apt-get -y install curl
+
+WORKDIR /tmp/
+RUN curl -LO https://wordpress.org/latest.tar.gz
+RUN tar -xzvf latest.tar.gz
+COPY ./conf/wp-config.php /tmp/wordpress/
+RUN cp -a /tmp/wordpress/. /var/www/tgarriss.42.fr/
+RUN chown -R www-data:www-data /var/www/tgarriss.42.fr/
+
+EXPOSE 9000
+
+CMD ["/usr/sbin/php-fpm7.3", "-F"]
+#+end_src
+
+#+name: wp-config.php
+#+header: :tangle ./srcs/requirements/wordpress/conf/wp-config.php
+#+begin_src php
+<?php
+/**
+ ,* The base configuration for WordPress
+ ,*
+ ,* The wp-config.php creation script uses this file during the installation.
+ ,* You don't have to use the web site, you can copy this file to "wp-config.php"
+ ,* and fill in the values.
+ ,*
+ ,* This file contains the following configurations:
+ ,*
+ ,* * Database settings
+ ,* * Secret keys
+ ,* * Database table prefix
+ ,* * ABSPATH
+ ,*
+ ,* @link https://wordpress.org/support/article/editing-wp-config-php/
+ ,*
+ ,* @package WordPress
+ ,*/
+
+// ** Database settings - You can get this info from your web host ** //
+/** The name of the database for WordPress */
+define( 'DB_NAME', 'wordpress' );
+
+/** Database username */
+define( 'DB_USER', 'wordpress_user' );
+
+/** Database password */
+define( 'DB_PASSWORD', 'password' );
+
+/** Database hostname */
+/** define( 'DB_HOST', 'localhost' );
+
+/** Database charset to use in creating database tables. */
+/** define( 'DB_CHARSET', 'utf8' );
+
+/** The database collate type. Don't change this if in doubt. */
+/** define( 'DB_COLLATE', '' );
+
+/**#@+
+ ,* Authentication unique keys and salts.
+ ,*
+ ,* Change these to different unique phrases! You can generate these using
+ ,* the {@link https://api.wordpress.org/secret-key/1.1/salt/ WordPress.org secret-key service}.
+ ,*
+ ,* You can change these at any point in time to invalidate all existing cookies.
+ ,* This will force all users to have to log in again.
+ ,*
+ ,* @since 2.6.0
+ ,*/
+define('AUTH_KEY',         'RKEyX5g{,_9x}}K+[KV3Q$oz.uV~@#oWZXugOl>-28-B%9e/gF1J3_ho}8z;H;SM');
+define('SECURE_AUTH_KEY',  '^~sh5gF=|]rP9(Zt3KW:_9r~t$~Y5u^89-]$yl#8MlM5`#+|l[1J6)6=<5H&eF+^');
+define('LOGGED_IN_KEY',    'OFePY%_Ixg7TLnPw1tiTQ.!Eg1l](6&U:0|I5B} ]}st04:qphvZ8:bqzU+A),b*');
+define('NONCE_KEY',        'Ey5e]dP`jboUGj||+JT-P5t`-ck?16G_T+Jo^nIv(KKT*jaYFk+),vz@w&Z`~sly');
+define('AUTH_SALT',        '+)c#PJy@B7hq4?7s2wJ38>5txak*CIhH`T`R4+ue5~KKyP_N/Okj7T7bKFIqA@OU');
+define('SECURE_AUTH_SALT', 'lsXb)&7+&k;5U>lT-5O6,8SH[gW_EMqwnW~33|j^B}U!mc|u@8]3=_IrI]b8Sbe2');
+define('LOGGED_IN_SALT',   'j>S%Za9(V|,m|v,a]Ap%<aRK{?@e>gYrucp]}l1t#}y%U^cN +es:avV!$rBT,$h');
+define('NONCE_SALT',       '+b,/[9#&m?hPAjxEwX=2n70Z-+L)Rp$Lny(B-UXX(`9]>n>NHkj|<oXR?-jZ(=0l');
+/**#@-*/
+
+/**
+ ,* WordPress database table prefix.
+ ,*
+ ,* You can have multiple installations in one database if you give each
+ ,* a unique prefix. Only numbers, letters, and underscores please!
+ ,*/
+$table_prefix = 'wp_';
+
+/**
+ ,* For developers: WordPress debugging mode.
+ ,*
+ ,* Change this to true to enable the display of notices during development.
+ ,* It is strongly recommended that plugin and theme developers use WP_DEBUG
+ ,* in their development environments.
+ ,*
+ ,* For information on other constants that can be used for debugging,
+ ,* visit the documentation.
+ ,*
+ ,* @link https://wordpress.org/support/article/debugging-in-wordpress/
+ ,*/
+define( 'WP_DEBUG', false );
+
+/* Add any custom values between this line and the "stop editing" line. */
+
+
+
+/* That's all, stop editing! Happy publishing. */
+
+/** Absolute path to the WordPress directory. */
+if ( ! defined( 'ABSPATH' ) ) {
+	define( 'ABSPATH', __DIR__ . '/' );
+}
+
+/** Sets up WordPress vars and included files. */
+require_once ABSPATH . 'wp-settings.php';
 #+end_src
