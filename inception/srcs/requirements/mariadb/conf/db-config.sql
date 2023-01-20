@@ -1,7 +1,18 @@
-CREATE DATABASE example_database;
-GRANT ALL ON example_database.* TO 'tgarriss'@'localhost' IDENTIFIED BY 'password' WITH GRANT OPTION;
+CREATE DATABASE IF NOT EXISTS wordpress;
+CREATE USER 'tgarriss'@'localhost';
+SET PASSWORD FOR 'tgarriss'@'localhost' = PASSWORD('password');
+GRANT ALL PRIVILEGES ON wordpress.* TO 'tgarriss'@'localhost' IDENTIFIED BY 'password';
+GRANT ALL ON wordpress.* to 'tgarriss'@'%' IDENTIFIED BY 'password';
+
 FLUSH PRIVILEGES;
-CREATE DATABASE wordpress DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
-GRANT ALL ON wordpress.* TO 'wordpress_user'@'localhost' IDENTIFIED BY 'password';
+
+CREATE USER 'superuser'@'localhost' IDENTIFIED BY 'password';
+GRANT ALL PRIVILEGES ON *.* TO 'superuser'@'localhost' WITH GRANT OPTION;
 FLUSH PRIVILEGES;
-exit
+CREATE USER 'superuser'@'%' IDENTIFIED BY 'password';
+GRANT ALL PRIVILEGES ON *.* TO 'superuser'@'%' WITH GRANT OPTION;
+
+FLUSH PRIVILEGES;
+
+ALTER USER 'root'@'localhost' IDENTIFIED BY 'newpass';
+flush privileges;
