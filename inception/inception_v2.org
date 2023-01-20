@@ -1,7 +1,7 @@
 #+title: Inception V2
 #+PROPERTY: header-args :noweb yes
 #+PROPERTY: header-args :mkdirp yes
-
+#+TOKEN: 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
 Shit still ain't working... docker-compose works fine, images and
 containers are booted up. But I still get that fucking 403 error from
 nginx, and I've got no freakin' clue why...
@@ -155,19 +155,20 @@ RUN curl -LO https://wordpress.org/latest.tar.gz
 RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
 RUN tar -xzvf latest.tar.gz
 
-COPY ./conf/wp-config.php /tmp/wordpress/
-COPY /conf/index.php /tmp/wordpress/
+COPY ./conf/wp-config.php .
+COPY /conf/index.php .
 
 RUN chmod -R 777 .
 RUN sed 's/listen = \/run\/php\/php7.3-fpm.sock/listen = 0.0.0.0:9000/' -i /etc/php/7.3/fpm/pool.d/www.conf
 
+RUN mkdir -p /var/www/tgarriss.42.fr/wordpress/
 RUN chmod 777 wp-cli.phar && mv wp-cli.phar /usr/local/bin/wp-cli/
-RUN cp -a /tmp/wordpress/. /var/www/tgarriss.42.fr/
+RUN cp -a /tmp/wordpress/. /var/www/tgarriss.42.fr/wordpress/
 RUN chown -R www-data:www-data /var/www/tgarriss.42.fr/
 
 EXPOSE 9000
 
-CMD wp-cli core install --allow-root --title="Wordpress" --admin_name="nimda" --admin_password="password" --admin_email="tgarriss@student.42quebec.com" --path="/var/www/tgarriss.42.fr/wordpress/" --url="https://localhost/" && php-fpm7.3 -F -R
+CMD wp-cli core install --allow-root --title="Wordpress" --admin_name="nimda" --admin_password="password" --admin_email="tgarriss@student.42quebec.com" --path="/var/www/tgarriss.42.fr" --url="https://localhost/" && php-fpm7.3 -F -R
 #+end_src
 
 #+name: wp-config.php
@@ -211,4 +212,74 @@ require_once( ABSPATH . 'wp-settings.php' );
 <?php
 phpinfo();
 ?>
+#+end_src
+
+#+name: docker-compose
+#+header: :tangle ./srcs/docker-compose.yml
+#+begin_src dockerfile
+version: '3'
+
+services:
+  nginx:
+    container_name: nginx
+    build: ./srcs/requirements/nginx/
+    ports:
+      - 443:443
+    volumes:
+      - /home/tgarriss/wordpress_data:/var/www/tgarriss.42.fr/wordpress
+    networks:
+      - network
+    restart: always
+
+  mariadb:
+    container_name: mariadb
+    build: ./srcs/requirements/mariadb/
+    volumes:
+      - /home/tgarriss/mariadb_data:/var/lib/mysql/
+    networks:
+      - network
+    env_file:
+      - .env
+    ports:
+      - 3306:3306
+    restart: always
+
+  wordpress:
+    container_name: wordpress
+    depends_on:
+      - mariadb
+    build: ./srcs/requirements/wordpress/
+    ports:
+      - 9000:9000
+    env_file:
+      - .env
+    volumes:
+      - /home/tgarriss/wordpress_data:/var/www/tgarriss.42.fr/wordpress/
+    networks:
+      - network
+    restart: always
+
+volumes:
+  mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/tgarriss/mariadb_data
+      o: bind
+  wordpress_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/tgarriss/wordpress_data
+      o: bind
+
+networks:
+  network:
+    driver: bridge
+#+end_src
+
+#+name: env
+#+header: :tangle ./srcs/.env
+#+begin_src text
+BLA=bla
 #+end_src
