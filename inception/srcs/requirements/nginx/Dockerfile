@@ -6,12 +6,13 @@ RUN apt-get -y install php-fpm
 RUN apt-get -y install openssl
 
 RUN mkdir /var/www/tgarriss.42.fr/
-RUN chown -R tgarriss:tgarriss /var/www/tgarriss.42.fr/
-RUN chmod -R tgarriss:tgarriss /var/www/tgarriss.42.fr/
+RUN groupmod -g 500 www-data && usermod -u 500 www-data && usermod -g 500 www-data
+RUN chown -R www-data:www-data /var/www/tgarriss.42.fr/
+RUN chmod g+s /var/www/tgarriss.42.fr/
 
 RUN mkdir /etc/nginx/ssl/
 RUN chown 777 /etc/nginx/ssl/
-usermod -a -G tgarriss nginx
+RUN usermod -aG www-data nginx
 RUN openssl req -x509 -nodes -days 365 \
         -newkey rsa:2048 \
         -keyout /etc/nginx/ssl/tgarriss.key \
