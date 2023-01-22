@@ -1,5 +1,5 @@
 #+title: Inception
-#+PROPERTY: header-args :noweb yes
+#+PROPERTY: header-args :noweb yes :mkdirp yes
 DEADLINE: <2023-02-05 Sun>
 
 #+GITHUB: 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
