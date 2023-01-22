@@ -2,9 +2,11 @@
 #+PROPERTY: header-args :noweb yes
 #+PROPERTY: header-args :mkdirp yes
 #+TOKEN: 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
-Shit still ain't working... docker-compose works fine, images and
-containers are booted up. But I still get that fucking 403 error from
-nginx, and I've got no freakin' clue why...
+
+Still not working... I need to figure out where I'm putting my
+wordpress install, and modify that in the docker-compose.yml too, I
+think... Right now, wordpress containers fails (because of the above),
+but nginx and mariadb are working ok...
 
 * nginx Docker
 #+name: nginx-docker
@@ -19,9 +21,12 @@ RUN apt-get -y install php-fpm
 RUN apt-get -y install openssl
 
 RUN mkdir /var/www/tgarriss.42.fr/
-RUN chown -R $USER:$USER /var/www/tgarriss.42.fr/
+RUN chown -R tgarriss:tgarriss /var/www/tgarriss.42.fr/
+RUN chmod -R tgarriss:tgarriss /var/www/tgarriss.42.fr/
 
 RUN mkdir /etc/nginx/ssl/
+RUN chown 777 /etc/nginx/ssl/
+usermod -a -G tgarriss nginx
 RUN openssl req -x509 -nodes -days 365 \
         -newkey rsa:2048 \
         -keyout /etc/nginx/ssl/tgarriss.key \
@@ -32,7 +37,7 @@ COPY ./conf/tgarriss.42.fr /etc/nginx/sites-available/
 RUN cp /etc/nginx/sites-available/tgarriss.42.fr /etc/nginx/sites-enabled/
 EXPOSE 443
 
-ENTRYPOINT ["/usr/bin/nginx", "-g", "daemon off;"]
+ENTRYPOINT ["/usr/sbin/nginx", "-g", "daemon off;"]
 #+end_src
 
 #+name: nginx-conf
@@ -42,6 +47,7 @@ ENTRYPOINT ["/usr/bin/nginx", "-g", "daemon off;"]
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
+    user nginx;
 
     root /var/www/tgarriss.42.fr;
     index index.php index.html index.htm;
@@ -158,13 +164,17 @@ RUN tar -xzvf latest.tar.gz
 COPY ./conf/wp-config.php .
 COPY /conf/index.php .
 
+RUN chown -R tgarriss:tgarriss
+RUN chmod -R tgarriss:tgarriss .
 RUN chmod -R 777 .
 RUN sed 's/listen = \/run\/php\/php7.3-fpm.sock/listen = 0.0.0.0:9000/' -i /etc/php/7.3/fpm/pool.d/www.conf
 
 RUN mkdir -p /var/www/tgarriss.42.fr/wordpress/
-RUN chmod 777 wp-cli.phar && mv wp-cli.phar /usr/local/bin/wp-cli/
+RUN chmod 777 wp-cli.phar && mv wp-cli.phar /usr/local/bin/wp-cli
 RUN cp -a /tmp/wordpress/. /var/www/tgarriss.42.fr/wordpress/
-RUN chown -R www-data:www-data /var/www/tgarriss.42.fr/
+
+RUN chown -R tgarriss:tgarriss /var/www/tgarriss.42.fr/
+RUN chmod -R tgarriss:tgarriss /var/www/tgarriss.42.fr/
 
 EXPOSE 9000
 

@@ -1,6 +1,7 @@
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
+    user nginx;
 
     root /var/www/tgarriss.42.fr;
     index index.php index.html index.htm;
