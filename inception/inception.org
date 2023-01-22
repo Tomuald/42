@@ -603,7 +603,7 @@ volumes:
 #+end_src
 ** nginx.conf
 #+name: nginx-config
-#+header: :tangle ./srcs/requirements/nginx/nginx.conf
+#+header: :tangle ./srcs/requirements/nginx/conf/nginx.conf
 #+header: :noweb yes
 #+begin_src text
 <<nginx-config-dev>>
@@ -634,7 +634,7 @@ clean:
 #+end_src
 ** simple html
 #+name: simple-html
-#+header: :tangle ./srcs/requirements/nginx/index.html
+#+header: :tangle ./srcs/requirements/nginx/conf/index.html
 #+begin_src html
 <HTML>
 
