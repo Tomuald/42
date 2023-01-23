@@ -308,6 +308,8 @@ sudo cp -a /tmp/wordpress/. /var/www/<your_domain>
 sudo chown -R www-data:www-data /var/www/<your_domain>
 #+end_src
 
+#+RESULTS:
+
 There's some additional configuration to be made for security.
 
 First, download the wordpress secret key generator.

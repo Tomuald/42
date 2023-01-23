@@ -429,7 +429,8 @@ FROM debian:buster
 
 RUN apt-get -y update && apt-get -y install php-fpm php-mysql
 
-RUN adduser -S nginx && addgroup -S nginx
+# line below doesnt work
+# RUN adduser -S nginx && addgroup -S nginx
 COPY conf/www.conf /etc/php/7.3/fpm/pool.d
 
 RUN mkdir /tmp/
@@ -529,7 +530,7 @@ Always remember to put ~#!/bin/bash~ at the top of your scripts.
 #+name: db-install
 #+header: :tangle ./srcs/requirements/mariadb/tools/db_install.sh :mkdirp yes
 #+begin_src bash
-
+#!/bin/bash
 mysql_secure_installation << _EOF_
 Y
 Rootp4ss
