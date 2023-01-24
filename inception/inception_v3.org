@@ -10,11 +10,26 @@ To add an nginx user (although it might not be necessary):
  - adduser --system --no-create-home --disabled-login --disabled-password --group nginx
 * environment
 #+name: env
-#+header: :tangle ./srcs/.env
+#+header: :tangle ./srcs/.env :mkdirp yes
 #+begin_src text
-MYSQL_ROOT_PASSWORD=password
-MYSQL_USER=tgarriss
-MYSQL_PASSWORD=password
+# WORDPRESS SETUP
+WORDPRESS_DB_HOST=mariadb:3306
+WORDPRESS_DB_ADM_USER=superuser
+WORDPRESS_DB_ADM_PASSWORD=password
+WORDPRESS_DB_NAME=wordpress
+WORDPRESS_TABLE_PREFIX=wp_
+WORDPRESS_DB_CHARSET=utf8
+WORDPRESS_DB_COLLATE=
+WORDPRESS_DB_USER=tgarriss
+WORDPRESS_DB_PASSWORD=password
+# WORDPRESS SITE SETUP
+WORDPRESS_SITE_URL=https://tgarriss.42.fr
+WORDPRESS_SITE_TITLE="Inception"
+WORDPRESS_ADMIN_EMAIL=tgarriss@student.42.fr
+# MARIADB SETUP
+MYSQL_ROOT_USER=tgarriss
+MYSQL_ROOT_PASSWORD=wordpress
+MYSQL_DATABASE=wordpress
 #+end_src
 * docker-compose
 #+name: docker-compose
@@ -132,9 +147,10 @@ FROM debian:buster
 
 RUN apt-get -y update && apt-get -y upgrade
 RUN apt-get -y install php-fpm php-mysql
-RUN apt-get -y install curl
+RUN apt-get -y install wget
 
 RUN mkdir -p /var/www/html
+WORKDIR /var/www/html
 #WORKDIR /tmp
 #RUN curl -LO https://wordpress.org/latest.tar.gz
 #RUN tar -xzvf latest.tar.gz
