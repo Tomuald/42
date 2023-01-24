@@ -8,7 +8,7 @@ RUN curl -LO https://wordpress.org/latest.tar.gz
 RUN tar -xzvf latest.tar.gz
 COPY ./conf/wp-config.php /tmp/wordpress/wp-config.php
 COPY ./conf/www.conf /etc/php/7.3/fpm/pool.d/
-RUN cp -a /tmp/wordpress/. /var/www/html
+RUN mv /tmp/wordpress/ /var/www/html
 RUN chown -R www-data:www-data /var/www/html
 
 EXPOSE 9000

@@ -12,11 +12,11 @@ RUN openssl req -x509 -nodes -days 365 \
         -out /etc/nginx/ssl/tgarriss.csr \
         -subj "/C=CA/ST=QC/L=Thomas/O=42Quebec/OU=tgarriss/CN=tgarriss"
 
-COPY ./nginx.conf .
+COPY ./conf/nginx.conf .
 RUN rm -rf /etc/nginx/sites-enabled/* && \
 	mv nginx.conf /etc/nginx/sites-available/nginx.conf && \
 	ln -fs /etc/nginx/sites-available/nginx.conf /etc/nginx/sites-enabled/
-COPY ./index.html /var/www/html/
+# COPY ./index.html /var/www/html/
 
 EXPOSE 443
 
