@@ -1,23 +1,24 @@
 FROM debian:buster
 
-RUN apt-get update -y && apt-get -y upgrade
+RUN apt-get -y update && apt-get -y upgrade
 RUN apt-get -y install nginx openssl
-RUN apt-get -y install php php7.3-fpm
 
-RUN mkdir /etc/nginx/ssl
+WORKDIR /tmp
 
-RUN openssl req -x509 -nodes -days 365 \
-        -newkey rsa:2048 \
-        -keyout /etc/nginx/ssl/tgarriss.key \
-        -out /etc/nginx/ssl/tgarriss.csr \
-        -subj "/C=CA/ST=QC/L=Thomas/O=42Quebec/OU=tgarriss/CN=tgarriss"
+COPY ./tools/* .
 
-COPY ./conf/nginx.conf .
-RUN rm -rf /etc/nginx/sites-enabled/* && \
-	mv nginx.conf /etc/nginx/sites-available/nginx.conf && \
-	ln -fs /etc/nginx/sites-available/nginx.conf /etc/nginx/sites-enabled/
-# COPY ./index.html /var/www/html/
+ARG DOMAIN_NAME=$DOMAIN_NAME
+ARG CERT_CRT=$CERT_CRT
+ARG CERT_KEY=$CERT_KEY
+
+ENV DOMAIN_NAME=$DOMAIN_NAME
+ENV CERT_CRT=$CERT_CRT
+ENV CERT_KEY=$CERT_KEY
+
+RUN ./generate_cert.sh
 
 EXPOSE 443
 
-CMD ["/usr/sbin/nginx", "-g", "daemon off;"]
+ENTRYPOINT ["./entry.sh"]
+
+CMD ["nginx", "-g", "daemon off;"]
