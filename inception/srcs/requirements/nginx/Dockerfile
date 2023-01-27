@@ -15,6 +15,7 @@ ENV DOMAIN_NAME=$DOMAIN_NAME
 ENV CERT_CRT=$CERT_CRT
 ENV CERT_KEY=$CERT_KEY
 
+RUN chmod +x generate_cert.sh
 RUN ./generate_cert.sh
 
 EXPOSE 443

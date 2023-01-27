@@ -8,7 +8,7 @@ WORKDIR /tmp
 COPY ./tools/entry.sh .
 COPY ./conf/50-server.conf /etc/mysql/mariadb.conf.d/50-server.cnf
 
-RUN mkdir -p /run/mysql && chown mysql:mysql /run/mysqld
+RUN mkdir -p /run/mysqld && chown mysql:mysql /run/mysqld
 
 EXPOSE 3306
 

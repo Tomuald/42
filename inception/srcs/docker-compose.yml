@@ -1,4 +1,4 @@
-version '3.8'
+version: '3.8'
 
 services:
   mariadb:
@@ -6,16 +6,31 @@ services:
     build: ./requirements/mariadb
     hostname: ${MYSQL_SERVER}
     restart: always
-    env_file: ./srcs/.env
+    environment:
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATADIR=${MYSQL_DATADIR}
     volumes:
       - db-volume:${MYSQL_DATADIR}
     networks:
       - inception
 
   wordpress:
+    container_name: wordpress
     build: ./requirements/wordpress
     restart: always
-    env_file: ./srcs/.env
+    environment:
+      - DOMAIN_NAME=${DOMAIN_NAME}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_EMAIL=${MYSQL_EMAIL}
+      - MYSQL_SERVER=${MYSQL_SERVER}
+      - WP_USER=${WP_USER}
+      - WP_PWD=${WP_PWD}
+      - WP_EMAIL=${WP_EMAIL}
     volumes:
       - wp-volume:/var/www/html
     networks:
@@ -26,10 +41,20 @@ services:
 
   nginx:
     container_name: nginx
+    build: ./requirements/nginx
+    args:
+        - DOMAIN_NAME=${DOMAIN_NAME}
+        - CERT_CRT=${CERT_CRT}
+        - CERT_KEY=${CERT_KEY}
+        - MYSQL_SERVER=${MYSQL_SERVER}
     ports:
-      443:443
+      - 443:443
     restart: always
-    env_file: ./srcs/.env
+    environment:
+      - DOMAIN_NAME=${DOMAIN_NAME}
+      - CERT_CRT=${CERT_CRT}
+      - CERT_KEY=${CERT_KEY}
+      - MYSQL_SERVER=${MYSQL_SERVER}
     volumes:
       - wp-volume:/var/www/html
     networks:
@@ -44,13 +69,13 @@ networks:
 volumes:
   db-volume:
     driver: local
-    driver-opts:
+    driver_opts:
       type: 'none'
       o: 'bind'
       device: ${VOLUME_PATH}/mariadb
   wp-volume:
     driver: local
-    driver-opts:
+    driver_opts:
       type: 'none'
       o: 'bind'
       device: ${VOLUME_PATH}/wordpress

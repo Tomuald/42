@@ -2,6 +2,36 @@
 
 All right. Fuck it. Use [[https://github.com/Mikastiv/inception][Mik's repo]] instead!
 
+* makefile
+#+name: makefile
+#+header: :tangle ./Makefile
+#+begin_src makefile
+
+all: up
+
+up:
+	@mkdir -p /home/mleblanc/data/mariadb
+	@mkdir -p /home/mleblanc/data/wordpress
+	@docker-compose -f srcs/docker-compose.yml up -d
+
+down:
+	@docker-compose -f srcs/docker-compose.yml down
+
+build:
+	@docker-compose -f srcs/docker-compose.yml build
+
+clean:
+	@docker-compose -f srcs/docker-compose.yml down --rmi all
+
+vclean:
+	@docker volume rm $(shell docker volume ls -q)
+
+fclean:	clean vclean
+
+re: fclean all
+
+.PHONY: all up down build clean vclean fclean re
+#+end_src
 * environment
 #+name: env
 #+header: :tangle ./srcs/.env :mkdirp yes
@@ -34,7 +64,7 @@ VOLUME_PATH=/home/tgarriss/data
 #+name: docker-compose
 #+header: :tangle ./srcs/docker-compose.yml :mkdirp yes
 #+begin_src docker-compose
-version '3.8'
+version: '3.8'
 
 services:
   mariadb:
@@ -42,16 +72,31 @@ services:
     build: ./requirements/mariadb
     hostname: ${MYSQL_SERVER}
     restart: always
-    env_file: ./srcs/.env
+    environment:
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATADIR=${MYSQL_DATADIR}
     volumes:
       - db-volume:${MYSQL_DATADIR}
     networks:
       - inception
 
   wordpress:
+    container_name: wordpress
     build: ./requirements/wordpress
     restart: always
-    env_file: ./srcs/.env
+    environment:
+      - DOMAIN_NAME=${DOMAIN_NAME}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_EMAIL=${MYSQL_EMAIL}
+      - MYSQL_SERVER=${MYSQL_SERVER}
+      - WP_USER=${WP_USER}
+      - WP_PWD=${WP_PWD}
+      - WP_EMAIL=${WP_EMAIL}
     volumes:
       - wp-volume:/var/www/html
     networks:
@@ -62,10 +107,20 @@ services:
 
   nginx:
     container_name: nginx
+    build: ./requirements/nginx
+    args:
+        - DOMAIN_NAME=${DOMAIN_NAME}
+        - CERT_CRT=${CERT_CRT}
+        - CERT_KEY=${CERT_KEY}
+        - MYSQL_SERVER=${MYSQL_SERVER}
     ports:
-      443:443
+      - 443:443
     restart: always
-    env_file: ./srcs/.env
+    environment:
+      - DOMAIN_NAME=${DOMAIN_NAME}
+      - CERT_CRT=${CERT_CRT}
+      - CERT_KEY=${CERT_KEY}
+      - MYSQL_SERVER=${MYSQL_SERVER}
     volumes:
       - wp-volume:/var/www/html
     networks:
@@ -80,13 +135,13 @@ networks:
 volumes:
   db-volume:
     driver: local
-    driver-opts:
+    driver_opts:
       type: 'none'
       o: 'bind'
       device: ${VOLUME_PATH}/mariadb
   wp-volume:
     driver: local
-    driver-opts:
+    driver_opts:
       type: 'none'
       o: 'bind'
       device: ${VOLUME_PATH}/wordpress
@@ -113,6 +168,7 @@ ENV DOMAIN_NAME=$DOMAIN_NAME
 ENV CERT_CRT=$CERT_CRT
 ENV CERT_KEY=$CERT_KEY
 
+RUN chmod +x generate_cert.sh
 RUN ./generate_cert.sh
 
 EXPOSE 443
@@ -126,7 +182,7 @@ There's a cleaner way to do this with sed. Use: ~sed -i
 's/SEARCH_REGEX/REPLACEMENT/g' INPUTFILE~
 
 #+name: nginx-entrypoint
-#+header: :tangle ./srcs/requirements/nginx/tools/entryp.sh :mkdirp yes
+#+header: :tangle ./srcs/requirements/nginx/tools/entry.sh :mkdirp yes
 #+begin_src bash
 #!/bin/bash
 
@@ -245,7 +301,7 @@ WORKDIR /tmp
 COPY ./tools/entry.sh .
 COPY ./conf/50-server.conf /etc/mysql/mariadb.conf.d/50-server.cnf
 
-RUN mkdir -p /run/mysql && chown mysql:mysql /run/mysqld
+RUN mkdir -p /run/mysqld && chown mysql:mysql /run/mysqld
 
 EXPOSE 3306
 

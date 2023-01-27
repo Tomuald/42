@@ -1,12 +1,24 @@
-all:
-	docker compose -f ./srcs/docker-compose.yml up -d --build
+all: up
+
+up:
+	@mkdir -p /home/mleblanc/data/mariadb
+	@mkdir -p /home/mleblanc/data/wordpress
+	@docker-compose -f srcs/docker-compose.yml up -d
 
 down:
-	docker compose -f ./scrs/docker-compose.yml down
+	@docker-compose -f srcs/docker-compose.yml down
+
+build:
+	@docker-compose -f srcs/docker-compose.yml build
 
 clean:
-	docker stop $$(docker ps -qa);\
-	docker rm $$(docker ps -qa);\
-	docker image rm $$(docker images -qa);\
+	@docker-compose -f srcs/docker-compose.yml down --rmi all
 
-.PHONY: all down clean
+vclean:
+	@docker volume rm $(shell docker volume ls -q)
+
+fclean:	clean vclean
+
+re: fclean all
+
+.PHONY: all up down build clean vclean fclean re
