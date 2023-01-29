@@ -1,17 +1,18 @@
 FROM debian:buster
 
 RUN apt-get -y update && apt-get -y upgrade
-RUN apt-get -y install mariadb-server mariadb-client
+RUN apt-get install -y mariadb-server mariadb-client
+RUN rm -rf /var/lib/apt/lists/*
 
-WORKDIR /tmp
-
-COPY ./tools/entry.sh .
-COPY ./conf/50-server.conf /etc/mysql/mariadb.conf.d/50-server.cnf
-
-RUN mkdir -p /run/mysqld && chown mysql:mysql /run/mysqld
+RUN mkdir -p /var/run/mysqld
+RUN chown -R mysql:mysql /var/run/mysqld
+RUN chmod 777 /var/run/mysqld
 
 EXPOSE 3306
 
-ENTRYPOINT ["./entry.sh"]
+COPY ./tools/mariadb.sh /usr/local/bin
+RUN chmod +x /usr/local/bin/mariadb.sh
 
-CMD ["mysqld"]
+ENTRYPOINT ["/usr/local/bin/mariadb.sh"]
+
+CMD ["mysqld", "--bind-adress=0.0.0.0"]

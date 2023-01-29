@@ -1,24 +1,28 @@
-all: up
-
-up:
-	@mkdir -p /home/mleblanc/data/mariadb
-	@mkdir -p /home/mleblanc/data/wordpress
-	@docker-compose -f srcs/docker-compose.yml up -d
+all:
+	if [! -d "/home/tgarriss/data/mysql"]
+	then
+		mkdir -p /home/tgarriss/data/mysql
+	fi
+	if [! -d "/home/tgarriss/data/wordpress"]
+	then
+		mkdir -p /home/tgarriss/data/wordpress
+	fi
+	docker compose -f ./srcs/docker-compose.yml up -d --build
 
 down:
-	@docker-compose -f srcs/docker-compose.yml down
-
-build:
-	@docker-compose -f srcs/docker-compose.yml build
+	docker compose -f ./srcs/docker-compose.yml down
 
 clean:
-	@docker-compose -f srcs/docker-compose.yml down --rmi all
+	docker stop $$(docker ps -qa)
+	docker rm $$(docker ps -qa)
+	docker rmi -f $$(docker images -qa)
+	docker volume rm $$(docker volume ls -q)
+	docker network rm $$(docker network ls -q)
 
-vclean:
-	@docker volume rm $(shell docker volume ls -q)
-
-fclean:	clean vclean
+fclean: clean
+	rm -Rf /home/tgarriss/data/mysql
+	rm -Rf /home/tgarriss/data/wordpress
 
 re: fclean all
 
-.PHONY: all up down build clean vclean fclean re
+.PHONY: all down clean re

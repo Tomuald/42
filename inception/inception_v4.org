@@ -2,6 +2,9 @@
 
 All right. Fuck it. Use [[https://github.com/Mikastiv/inception][Mik's repo]] instead!
 
+Can't make it work with miks repo... Vbachele works. So try that
+tomorrow...
+
 * makefile
 #+name: makefile
 #+header: :tangle ./Makefile
@@ -10,8 +13,8 @@ All right. Fuck it. Use [[https://github.com/Mikastiv/inception][Mik's repo]] in
 all: up
 
 up:
-	@mkdir -p /home/mleblanc/data/mariadb
-	@mkdir -p /home/mleblanc/data/wordpress
+	@mkdir -p /home/tgarriss/data/mariadb
+	@mkdir -p /home/tgarriss/data/wordpress
 	@docker-compose -f srcs/docker-compose.yml up -d
 
 down:
@@ -107,8 +110,9 @@ services:
 
   nginx:
     container_name: nginx
-    build: ./requirements/nginx
-    args:
+    build:
+      context: ./requirements/nginx
+      args:
         - DOMAIN_NAME=${DOMAIN_NAME}
         - CERT_CRT=${CERT_CRT}
         - CERT_KEY=${CERT_KEY}
@@ -158,7 +162,7 @@ RUN apt-get -y install nginx openssl
 
 WORKDIR /tmp
 
-COPY ./tools/* .
+COPY ./tools/* ./
 
 ARG DOMAIN_NAME=$DOMAIN_NAME
 ARG CERT_CRT=$CERT_CRT
@@ -490,7 +494,7 @@ EOF
     echo "MariaDB listening on port 3306"
 fi
 
-exec "$@
+exec "$@"
 #+end_src
 
 * wordpress
@@ -507,7 +511,7 @@ RUN mkdir -p /var/www /run/php
 
 WORKDIR /var/www/
 
-COPY /tools/* .
+COPY ./tools/* ./
 COPY ./conf/www.conf /etc/php/7.3/fpm/pool.d/www.conf
 
 RUN chmod +x wp-cli.phar && mv wp-cli.phar /usr/bin/wp

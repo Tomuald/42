@@ -1,3 +1,296 @@
+#+title: Inception V5
+
+All right, so I managed to make [[https://github.com/vbachele/Inception][vbachele's repo]] work. Now, I'm gonna
+reimplement what he did, without the bonuses, and hope that everthing
+works ok. I'm also gonna make sure that I rewrite the parts that I
+don't like, and remove whatever is superfluous.
+
+* makefile
+#+name: makefile
+#+header: :tangle ./Makefile
+#+begin_src makefile
+all:
+	if [! -d "/home/tgarriss/data/mysql"]
+	then
+		mkdir -p /home/tgarriss/data/mysql
+	fi
+	if [! -d "/home/tgarriss/data/wordpress"]
+	then
+		mkdir -p /home/tgarriss/data/wordpress
+	fi
+	docker compose -f ./srcs/docker-compose.yml up -d --build
+
+down:
+	docker compose -f ./srcs/docker-compose.yml down
+
+clean:
+	docker stop $$(docker ps -qa)
+	docker rm $$(docker ps -qa)
+	docker rmi -f $$(docker images -qa)
+	docker volume rm $$(docker volume ls -q)
+	docker network rm $$(docker network ls -q)
+
+fclean: clean
+	rm -Rf /home/tgarriss/data/mysql
+	rm -Rf /home/tgarriss/data/wordpress
+
+re: fclean all
+
+.PHONY: all down clean re
+#+end_src
+
+* environment
+#+name: env
+#+header: :tangle ./srcs/.env :mkdirp yes
+#+begin_src text
+DOMAIN_NAME=tgarriss.42.fr
+
+MYSQL_HOSTNAME=mariadb
+MYSQL_DATABASE=wordpress
+MYSQL_USER=tgarriss
+MYSQL_PASSWORD=password
+MYSQL_ROOT_PASSWORD=root
+#+end_src
+
+* docker-compose
+#+name: docker-compose
+#+header: :tangle ./srcs/docker-compose.yml :mkdirp yes
+#+begin_src docker-compose
+version: '3'
+
+services:
+  nginx:
+    container_name: nginx
+    build: ./requirements/nginx
+    ports:
+      - 443:443
+    volumes:
+      - wp-data:/var/www/html
+    restart: always
+    networks:
+      - network
+
+  mariadb:
+    container_name: mariadb
+    build: ./requirements/mariadb
+    volumes:
+      - db-data:/var/lib/mysql
+    restart: always
+    networks:
+      - network
+    env_file:
+      - .env
+  wordpress:
+    container_name: wordpress
+    build: ./requirements/wordpress
+    volumes:
+      - wp-data:/var/www/html
+    depends_on:
+      - mariadb
+    restart: always
+    networks:
+      - network
+    env_file:
+      - .env
+
+volumes:
+  db-data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/tgarriss/data/mysql
+      o: bind
+  wp-data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/tgarriss/data/wordpress
+      o: bind
+
+networks:
+  network:
+    driver: bridge
+
+#+end_src
+* nginx
+#+name: nginx-dockerfile
+#+header: :tangle ./srcs/requirements/nginx/Dockerfile :mkdirp yes
+#+begin_src dockerfile
+FROM debian:buster
+
+RUN apt-get -y update && apt-get -y upgrade
+RUN apt-get install -y nginx openssl
+
+RUN mkdir /etc/nginx/ssl
+RUN openssl req -newkey rsa:4096 -x509 -sha256 -days 365 -nodes \
+       -out /etc/nginx/ssl/tgarriss.crt \
+       -keyout /etc/nginx/ssl/tgarriss.key \
+       -subj "/C=CA/ST=Quebec/L=Quebec/O=42 Quebec/OU=tgarriss/CN=tgarriss/"
+
+COPY ./conf/nginx.conf /etc/nginx/conf.d
+
+RUN mkdir -p /run/nginx
+
+EXPOSE 443
+
+CMD ["nginx", "-g", "daemon off;"]
+#+end_src
+
+
+#+name: nginx-conf
+#+header: :tangle ./srcs/requirements/nginx/conf/nginx.conf :mkdirp yes
+#+begin_src text
+server {
+        listen 443 ssl;
+        listen [::]:443 ssl;
+
+        server_name tgarriss.42.fr;
+        ssl_certificate /etc/nginx/ssl/tgarriss.crt;
+        ssl_certificate_key /etc/nginx/ssl/tgarriss.key;
+        ssl_protocols TLSv1.2 TLSv1.3;
+
+        root /var/www/html
+        index index.php index.nginx-debian.html
+
+        location / {
+                 try_file $uri $uri/ /index.php$is_args$args;
+        }
+        location ~ \.php$ {
+                 fastcgi_split_path_info ^(.+\.php)(/.+)$;
+                 fastcgi_pass wordpress:9000; #PHP for wordpress will listen on the port 9000
+                 fastcgi_index index.php;
+                 include fastcgi_params;
+                 fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+                 fastcgi_param SCRIPT_NAME $fastcgi_script_name;
+        }
+}
+#+end_src
+
+* mariadb
+#+name: mariadb-dockerfile
+#+header: :tangle ./srcs/requirements/mariadb/Dockerfile :mkdirp yes
+#+begin_src dockerfile
+FROM debian:buster
+
+RUN apt-get -y update && apt-get -y upgrade
+RUN apt-get install -y mariadb-server mariadb-client
+RUN rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /var/run/mysqld
+RUN chown -R mysql:mysql /var/run/mysqld
+RUN chmod 777 /var/run/mysqld
+
+EXPOSE 3306
+
+COPY ./tools/mariadb.sh /usr/local/bin
+RUN chmod +x /usr/local/bin/mariadb.sh
+
+ENTRYPOINT ["/usr/local/bin/mariadb.sh"]
+
+CMD ["mysqld", "--bind-adress=0.0.0.0"]
+#+end_src
+
+#+name: mariadb-sh
+#+header: :tangle ./srcs/requirements/mariadb/tools/mariadb.sh :mkdirp yes
+#+begin_src bash
+#!/bin/sh
+
+mysql_install_db
+
+/etc/init.d/mysql start
+
+if [! -d "/var/lib/mysql/$MYSQL_DATABASE"]
+then
+    mysql_secure_installation << _EOF_
+
+    Y
+    root
+    root
+    Y
+    n
+    Y
+    Y
+    _EOF_
+
+echo "GRANT ALL ON *.* TO 'root'@'%' IDENTIFIED BY '$MYSQL_ROOT_PASSWORD'; FLUSH PRIVILEGES;" | mysql -uroot
+echo "CREATE DATABASE IF NOT EXISTS $MYSQL_DATABASE; GRANT ALL ON $MYSQL_DATABASE.* TO '$MYSQL_USER'@'%' IDENTIFIED BY '$MYSQL_PASSWORD'; FLUSH PRIVILEGES;" | mysql -u root
+
+fi
+
+/etc/init.d/mysql stop
+exec "$@"
+#+end_src
+
+* wordpress
+
+#+name: wordpress-dockerfile
+#+header: :tangle ./srcs/requirements/wordpress/Dockerfile :mkdirp yes
+#+begin_src dockerfile
+FROM debian:buster
+
+RUN apt-get -y update && apt-get -y upgrade
+RUN apt-get -y install \
+    wget \
+    bash \
+    php \
+    php-cgi \
+    php-mysql \
+    php-fpm \
+    php-pdo \
+    php-gd \
+    php-cli \
+    php-mbstring \
+
+RUN rm -rf /var/lib/apt/lists/*
+
+RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+RUN chmod +x wp-cli.phar
+RUN mv wp-cli.phar /usr/local/bin/wp
+
+COPY ./conf/www.conf /etc/php/7.3/fpm/pool.d/
+
+RUN mkdir -p /run/php
+
+COPY ./tools/create_wordpress.sh /usr/local/bin
+RUN chmod +x /usr/local/bin/create_wordpress.sh
+ENTRYPOINT ["/usr/local/bin/create_wordpress.sh"]
+
+WORKDIR /var/www/html/
+
+EXPOSE 9000
+
+CMD ["/usr/sbin/php-fpm7.3", "-F"]
+#+end_src
+
+#+name: create-wordpress
+#+header: :tangle ./srcs/requirements/wordpress/tools/create_wordpress.sh :mkdirp yes
+#+begin_src bash
+#!/bin/bash
+
+if [-f ./wp-config.php]
+then
+    echo "wordpress already set up"
+    echo "run fclean to remove data files"
+else
+    wget http://wordpress.org/latest.tar.gz
+    tar -zxvf latest.tar.gz
+    mv wordpress/* .
+    rm -rf latest.tar.gz
+    rm -rf wordpress
+
+    sed -i "s/username_here/$MYSQL_USER/g" wp-config-sample.php
+    sed -i "s/password_here/$MYSQL_PASSWORD/g" wp-config-sample.php
+    sed -i "s/localhost/$MYSQL_HOSTNAME/g" wp-config-sample.php
+    sed -i "s/database_name_here/$MYSQL_DATABASE/g" wp-config-sample.php
+    cp wp-config-sample.php wp-config.php
+fi
+
+exec "$@"
+#+end_src
+
+#+name: www-conf
+#+header: :tangle ./srcs/requirements/wordpress/conf/www.conf :mkdirp yes
+#+begin_src text
 ; Start a new pool named 'www'.
 ; the variable $pool can be used in any directive and will be replaced by the
 ; pool name ('www' here)
@@ -437,3 +730,4 @@ pm.max_spare_servers = 10
 ;php_admin_value[error_log] = /var/log/fpm-php.www.log
 ;php_admin_flag[log_errors] = on
 ;php_admin_value[memory_limit] = 32M
+#+end_src
