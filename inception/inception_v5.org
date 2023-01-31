@@ -5,19 +5,19 @@ reimplement what he did, without the bonuses, and hope that everthing
 works ok. I'm also gonna make sure that I rewrite the parts that I
 don't like, and remove whatever is superfluous.
 
+All right. This version kind of works... I still need to:
+ 1) make sure my wordpress installation is configured properly
+    1) can the admin access the db without a pw?
+    2) does the site persist after vm reboot?
+    3) can a user access the db?
+ 2) ... that's pretty much it...
 * makefile
 #+name: makefile
 #+header: :tangle ./Makefile
 #+begin_src makefile
 all:
-	if [! -d "/home/tgarriss/data/mysql"]
-	then
-		mkdir -p /home/tgarriss/data/mysql
-	fi
-	if [! -d "/home/tgarriss/data/wordpress"]
-	then
-		mkdir -p /home/tgarriss/data/wordpress
-	fi
+	mkdir -p /home/tgarriss/data/mysql
+	mkdir -p /home/tgarriss/data/wordpress
 	docker compose -f ./srcs/docker-compose.yml up -d --build
 
 down:
@@ -149,11 +149,11 @@ server {
         ssl_certificate_key /etc/nginx/ssl/tgarriss.key;
         ssl_protocols TLSv1.2 TLSv1.3;
 
-        root /var/www/html
-        index index.php index.nginx-debian.html
+        root /var/www/html;
+        index index.php index.nginx-debian.html;
 
         location / {
-                 try_file $uri $uri/ /index.php$is_args$args;
+                 try_files $uri $uri/ /index.php$is_args$args;
         }
         location ~ \.php$ {
                  fastcgi_split_path_info ^(.+\.php)(/.+)$;
@@ -187,7 +187,7 @@ RUN chmod +x /usr/local/bin/mariadb.sh
 
 ENTRYPOINT ["/usr/local/bin/mariadb.sh"]
 
-CMD ["mysqld", "--bind-adress=0.0.0.0"]
+CMD ["mysqld", "--bind-address=0.0.0.0"]
 #+end_src
 
 #+name: mariadb-sh
@@ -199,8 +199,10 @@ mysql_install_db
 
 /etc/init.d/mysql start
 
-if [! -d "/var/lib/mysql/$MYSQL_DATABASE"]
+if [-d "/var/lib/mysql/$MYSQL_DATABASE"]
 then
+    echo "database already exists."
+else
     mysql_secure_installation << _EOF_
 
     Y
@@ -229,17 +231,7 @@ exec "$@"
 FROM debian:buster
 
 RUN apt-get -y update && apt-get -y upgrade
-RUN apt-get -y install \
-    wget \
-    bash \
-    php \
-    php-cgi \
-    php-mysql \
-    php-fpm \
-    php-pdo \
-    php-gd \
-    php-cli \
-    php-mbstring \
+RUN apt-get -y install wget bash php php-cgi php-mysql php-fpm php-pdo php-gd php-cli php-mbstring
 
 RUN rm -rf /var/lib/apt/lists/*
 
