@@ -3,55 +3,50 @@ version: '3'
 services:
   nginx:
     container_name: nginx
-    build: ./srcs/requirements/nginx/
+    build: ./requirements/nginx
     ports:
       - 443:443
     volumes:
-      - /home/tgarriss/wordpress_data:/var/www/tgarriss.42.fr/wordpress
+      - wp-data:/var/www/html
+    restart: always
     networks:
       - network
-    restart: always
 
   mariadb:
     container_name: mariadb
-    build: ./srcs/requirements/mariadb/
+    build: ./requirements/mariadb
     volumes:
-      - /home/tgarriss/mariadb_data:/var/lib/mysql/
+      - db-data:/var/lib/mysql
+    restart: always
     networks:
       - network
     env_file:
       - .env
-    ports:
-      - 3306:3306
-    restart: always
-
   wordpress:
     container_name: wordpress
+    build: ./requirements/wordpress
+    volumes:
+      - wp-data:/var/www/html
     depends_on:
       - mariadb
-    build: ./srcs/requirements/wordpress/
-    ports:
-      - 9000:9000
-    env_file:
-      - .env
-    volumes:
-      - /home/tgarriss/wordpress_data:/var/www/tgarriss.42.fr/wordpress/
+    restart: always
     networks:
       - network
-    restart: always
+    env_file:
+      - .env
 
 volumes:
-  mariadb_data:
+  db-data:
     driver: local
     driver_opts:
       type: none
-      device: /home/tgarriss/mariadb_data
+      device: /home/tgarriss/data/mysql
       o: bind
-  wordpress_data:
+  wp-data:
     driver: local
     driver_opts:
       type: none
-      device: /home/tgarriss/wordpress_data
+      device: /home/tgarriss/data/wordpress
       o: bind
 
 networks:

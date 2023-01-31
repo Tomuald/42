@@ -4,8 +4,10 @@ mysql_install_db
 
 /etc/init.d/mysql start
 
-if [! -d "/var/lib/mysql/$MYSQL_DATABASE"]
+if [-d "/var/lib/mysql/$MYSQL_DATABASE"]
 then
+    echo "database already exists."
+else
     mysql_secure_installation << _EOF_
 
     Y

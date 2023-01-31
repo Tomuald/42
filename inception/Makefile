@@ -1,12 +1,6 @@
 all:
-	if [! -d "/home/tgarriss/data/mysql"]
-	then
-		mkdir -p /home/tgarriss/data/mysql
-	fi
-	if [! -d "/home/tgarriss/data/wordpress"]
-	then
-		mkdir -p /home/tgarriss/data/wordpress
-	fi
+	mkdir -p /home/tgarriss/data/mysql
+	mkdir -p /home/tgarriss/data/wordpress
 	docker compose -f ./srcs/docker-compose.yml up -d --build
 
 down:
