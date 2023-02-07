@@ -2,8 +2,9 @@ FROM debian:buster
 
 RUN apt-get -y update && apt-get -y upgrade
 RUN apt-get -y install wget bash php php-cgi php-mysql php-fpm php-pdo php-gd php-cli php-mbstring
+RUN apt-get -y install curl
 
-RUN rm -rf /var/lib/apt/lists/*
+# RUN rm -rf /var/lib/apt/lists/* # unnecessary I think, it just clears the apt cache.
 
 RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
 RUN chmod +x wp-cli.phar
