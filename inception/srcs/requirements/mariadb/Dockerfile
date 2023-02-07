@@ -10,6 +10,7 @@ RUN chmod 777 /var/run/mysqld
 
 EXPOSE 3306
 
+COPY ./conf/datadump.sql /tmp/
 COPY ./tools/mariadb.sh /usr/local/bin
 RUN chmod +x /usr/local/bin/mariadb.sh
 

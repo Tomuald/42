@@ -25,6 +25,8 @@ echo "CREATE DATABASE IF NOT EXISTS $MYSQL_DATABASE; GRANT ALL ON $MYSQL_DATABAS
 UPDATE mysql.user SET plugin = '' WHERE user = 'root' AND host = 'localhost';
 FLUSH PRIVILEGES;
 
+mysql -uroot -p$MYSQL_ROOT_PASSWORD $MYSQL_DATABASE < /tmp/datadump.sql
+
 fi
 
 /etc/init.d/mysql stop
