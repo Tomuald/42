@@ -1,0 +1,184 @@
+#+title: Webserv Research
+
+This is the research document for the webserv project at 42.
+
+* What is an http webserver?
+An http server is a program that listen for incoming HTTP requests,
+processes them, and returns an http response.
+
+1) A client sends an HTTP request to the server: A client, such as a
+   web browser, sends an HTTP request to the server by specifying a
+   URL (Uniform Resource Locator) or by clicking on a link.
+2) The server receives the request: The HTTP server receives the
+   request and parses it to determine what the client is asking for.
+3) The server processes the request: The server performs any necessary
+   processing to generate the requested response. This might involve
+   running server-side code, querying a database, or accessing a file
+   system.
+4) The server returns an HTTP response: The server generates an HTTP
+   response containing the requested information and sends it back to
+   the client.
+5) The client receives the response: The client receives the HTTP
+   response and displays the requested information to the user.
+
+Webservers usually run on port 80 (HTTP) or 443 (HTTPS). They can
+serve static files, and dynamically create content using server-side
+code to retrieve data from files or a database.
+
+** Non-blocking servers
+A non-blocking web server is a type of web server architecture that
+allows multiple requests to be processed simultaneously. In a
+traditional blocking server, a request is processed in a
+single-threaded manner, meaning that the server must wait for the
+response to be generated before moving on to the next request.
+
+In a non-blocking web server, on the other hand, multiple requests can
+be processed concurrently without waiting for the completion of any
+individual request. This is achieved by using an event-driven or
+asynchronous programming model, where requests are handled by a small
+number of threads that use non-blocking I/O operations to communicate
+with the clients.
+
+See the [[O_NONBLOCK][O_NONBLOCK]] section below.
+
+* allowed functions
+Anything in C++98 is allowed, and a number of C functions.
+
+** kqueue()
+While epoll() is slightly more performant than kqueue(), it is
+available on Linux only. Since we use MacOS, we'll use the kqueue()
+family of functions to build our webserver.
+
+kqueue()...
+ 1) is implemented with a binary heap to manage the set of monitored
+    file descriptors;
+ 2) supports different types of events (not just I/O): process
+    signals, timers, user-defined events, ...
+
+** fork()
+Must SOLELY be used to run CGI scripts.
+
+When a CGI script is executed, the web server typically forks a new
+process to handle the request and runs the script in the child
+process. This allows the server to continue accepting and handling
+other requests while the script is running. Additionally, running CGI
+scripts after a fork() call can also provide a level of security by
+isolating the script execution environment from the web server and
+other running processes.
+
+** fcntl()
+Short for "file control"; is a system call in Unix-like operating
+systems that allows a process to manipulate file descriptor flags and
+perform various other operations on open file descriptors.
+
+** socket()
+The socket function is used to create a new network socket. A socket
+is an endpoint for communication between two processes, identified by
+an IP address and a port number. It returns a file descriptor. This
+file descriptor can be passed to the fcntl() function to set its
+flags.
+
+** bind()
+The bind() function is a socket programming function used to associate
+a socket with a specific network address and port number. It is called
+on a socket that has already been created with the socket() function.
+
+** accept()
+The accept() function is a socket programming function used to accept
+a new incoming client connection on a socket that has been set up to
+listen for incoming connections using the listen() function. It
+creates a new socket file descriptor for the client connection, which
+can be used for sending and receiving data.
+
+** listen()
+The listen() function is used in socket programming to set a socket to
+listen for incoming connections. It is called on a socket that has
+already been created with the socket() function and bound to a
+particular address using the bind() function.
+
+** recv()
+The recv() function is used in socket programming to receive data from
+a connected socket. It is called on a socket that has already been
+created with the socket() function and connected to a remote endpoint
+using the connect() function, or after a successful call to the
+accept() function that returned a new socket for the incoming
+connection.
+
+* macros
+Macros and defines will be useful. The subject pdf clearly states that
+we can use EVERY macro and define.
+
+** F_SETFL
+A ~#define~ used as the command argument to the fcntl() system call to
+modify the file status flags associated with a file descriptor. Will
+be used in conjunction with kqueue().
+
+** O_NONBLOCK
+A ~#define~ used with open(). Sets the file descriptor to non-blocking
+mode, which means that I/O (read, write) operations return immediately
+with an error or a partial result if there is no data available.
+
+It will return an error code of EAGAIN or EWOULDBLOCK if there is no
+data available to be read or if the output buffer is full,
+respectively. This allows an application to perform other tasks or
+wait for other events while waiting for I/O operations to complete on
+the file descriptor.
+
+* CGI
+CGI has been largely replaced by newer web technologies such as
+server-side scripting languages, application servers, and APIs, but it
+remains a useful tool for certain types of web applications and legacy
+systems.
+
+The Common Gateway Interface (CGI) is a standard protocol for enabling
+web servers to execute external programs or scripts and to communicate
+with them over the web. When a user requests a CGI script, the web
+server passes control to the script, which generates a response and
+returns it to the server for delivery to the user's browser.
+
+The basic steps involved in using CGI are as follows:
+
+1) The user requests a resource (e.g., a web page) from the server.
+2) The server recognizes that the requested resource is a CGI script
+   and passes control to the script.
+3) The script generates a response (e.g., an HTML page) and sends it
+   back to the server.
+4) The server sends the response to the user's browser for display.
+
+To work with CGI, a web server must be configured to recognize and
+execute CGI scripts. This typically involves specifying a directory
+(or directories) where CGI scripts are stored and configuring the
+server to recognize certain file extensions (e.g., .cgi, .pl) as
+executable scripts.
+* Configuration
+A lot of this will be similar to the server section of the NGINX
+configuration file.
+
+It should be passed to the executable as an argument.
+
+* Implementation
+Just a place to deconstruct how I wanna build the app.
+
+Since we're using C++, it might be interesting to build the project
+using OOP. There are several parts we could encapsulate in classes:
+
+1) A server class that handles incoming requests, dispatches them to
+   the appropriate handlers, and manages connections to clients.
+2) A request handler class that parses incoming requests, generates
+   responses, and sends them back to the client.
+3) A database class that handles connections to a database, executes
+   queries, and returns results.
+4) A session class that manages state information for a user session,
+   such as authentication and authorization tokens.
+5) A cache class that caches frequently accessed data to improve
+   performance.
+6) A logging class that records server events and errors for debugging
+   and analysis.
+7) A configuration class that reads and parses configuration files,
+   and provides access to configuration options.
+
+* Further Reading
+1. [[https://trungams.github.io/2020-08-23-a-simple-http-server-from-scratch/][HTTP server from scratch]]
+2. [[https://beej.us/guide/bgnet/html/#client-server-background][Beej's Guide to Network Programming]]
+3. [[https://www.rfc-editor.org/rfc/rfc7230][HTML 1.1 RFC]]
+4. [[http://www.kegel.com/c10k.html][the C10K problem]]

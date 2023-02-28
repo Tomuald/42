@@ -1,19 +1,29 @@
-FROM debian:buster
+FROM alpine:3.16
 
-RUN apt-get -y update && apt-get -y upgrade
-RUN apt-get install -y mariadb-server mariadb-client
-RUN rm -rf /var/lib/apt/lists/*
+RUN apk update && apk upgrade && apk add --update dumb-init mariadb mariadb-common mariadb-client mariadb-server-utils gettext bash
 
-RUN mkdir -p /var/run/mysqld
-RUN chown -R mysql:mysql /var/run/mysqld
-RUN chmod 777 /var/run/mysqld
+RUN rm -rf /etc/my.cnf
+COPY conf/my.cnf /etc/my.cnf
+
+RUN rm -rf /etc/mysql/my.cnf
+COPY conf/my.cnf /etc/mysql/my.cnf
+
+COPY tools/mariadb.sh ./mariadb.sh
+# COPY conf/datadump.sql /tmp/datadump.sql
+
+RUN chmod +x mariadb.sh
+
+RUN mkdir -p /run/mysqld /var/lib/mysql /var/log/mysql
+
+RUN chmod 777 /var/lib/mysql
+RUN chmod 777 /run/mysqld
+RUN chmod 777 /var/log/mysql
+RUN chown -R mysql:mysql /var/log/mysql
+RUN chown -R mysql:mysql /var/lib/mysql
+RUN chown -R mysql:mysql /run/mysqld
 
 EXPOSE 3306
 
-COPY ./conf/datadump.sql /tmp/
-COPY ./tools/mariadb.sh /usr/local/bin
-RUN chmod +x /usr/local/bin/mariadb.sh
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 
-ENTRYPOINT ["/usr/local/bin/mariadb.sh"]
-
-CMD ["mysqld", "--bind-address=0.0.0.0"]
+CMD ["bash", "-c", "./mariadb.sh && exec mysqld"]

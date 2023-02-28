@@ -33,6 +33,7 @@ Some useful links for the project:
   - [[#mariadb][mariadb]]
   - [[#docker-compose-network][docker-compose network]]
   - [[#docker-compose-volumes][docker-compose volumes]]
+  - [[#makefile][Makefile]]
 
 * Requirements
 *Rules:*
@@ -213,11 +214,11 @@ version: '3'
 services:
   nginx:
     container_name: nginx
-    build: ./srcs/requirements/nginx/
+    build: ./requirements/nginx/
     ports:
       - 443:443
     volumes:
-      - /home/tgarriss/wordpress_data:/var/www/html/
+      - wp_volume:/var/www/html/
     networks:
       - network
     restart: always
@@ -306,11 +307,13 @@ FROM debian:buster
 
 RUN apt-get update -y
 RUN apt-get -y install nginx openssl
-# this installs php and php7.3-fpm
-RUN apt-get -y install php php7.3-fpm
+# this installs php and php7.3-fpm. WHICH I DON'T NEED!
+# RUN apt-get -y install php php7.3-fpm
 
 # required; if inexistant, openssl call raises an error
 RUN mkdir /etc/nginx/ssl/
+RUN mkdir -p /run/nginx
+
 RUN openssl req -x509 -nodes -days 365 \
         -newkey rsa:2048 \
         -keyout /etc/nginx/ssl/tgarriss.key \
@@ -318,7 +321,7 @@ RUN openssl req -x509 -nodes -days 365 \
         -subj "/C=CA/ST=QC/L=Thomas/O=42Quebec/OU=tgarriss/CN=tgarriss"
 
 # replace this with your actual conf path
-COPY nginx.conf /etc/nginx/conf.d/
+COPY conf/nginx.conf /etc/nginx/conf.d/
 
 # exposes the 443 port (the HTTPS port)
 EXPOSE 443
@@ -375,7 +378,7 @@ server {
   ssl_protocols TLSv1.2 TLSv1.3;
 
   root /var/www/html/;
-  index index.html;
+  index index.php index.nginx-debian.html;
 
   location / {
 		try_files $uri $uri/ /index.php$is_args$args;
@@ -408,13 +411,13 @@ a file, i.e. "program < file".
     container_name: wordpress
     depends_on:
       - mariadb
-      build: ./srcs/requirements/wordpress/
+    build: ./requirements/wordpress/
     ports:
       - 9000:9000
     env_file:
       - .env
     volumes:
-      - /home/tgarriss/wordpress_data:/var/www/html/
+      - wp_volume:/var/www/html/
     networks:
       - network
     restart: always
@@ -427,13 +430,16 @@ Now for the wordpress Dockerfile...
 #+begin_src dockerfile
 FROM debian:buster
 
-RUN apt-get -y update && apt-get -y install php-fpm php-mysql
+RUN apt-get -y update && apt-get -y install wget bash php php-cgi php-mysql php-fpm php-pdo php-gd php-cli php-mbstring
+
 
 # line below doesnt work
 # RUN adduser -S nginx && addgroup -S nginx
 COPY conf/www.conf /etc/php/7.3/fpm/pool.d
 
-RUN mkdir /tmp/
+RUN mkdir -p /tmp/
+RUN mkdir -p /run/php
+
 COPY conf/index.html /tmp/index.html
 COPY tools/configure.sh /tmp/configure.sh
 
@@ -441,7 +447,7 @@ RUN wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.ph
 RUN chmod +x wp-cli.phar
 RUN cp wp-cli.phar /usr/bin/wp
 
-WORKDIR /var/www/html/wordpress
+WORKDIR /var/www/html/
 
 ENTRYPOINT ["sh", "/tmp/configure.sh"]
 #+end_src
@@ -461,8 +467,8 @@ if [ ! -f "/var/www/html/index.html" ]; then
     mv /tmp/index.html /var/www/html/index.html
 
     # adminer
-    wget https://github.com/vrana/adminer/releases/download/v4.8.1/adminer-4.8.1-mysql-en.php -O /var/www/html/adminer.php &> /dev/null
-    wget https://raw.githubusercontent.com/Niyko/Hydra-Dark-Theme-for-Adminer/master/adminer.css -O /var/www/html/adminer.css &> /dev/null
+    #wget https://github.com/vrana/adminer/releases/download/v4.8.1/adminer-4.8.1-mysql-en.php -O /var/www/html/adminer.php &> /dev/null
+    #wget https://raw.githubusercontent.com/Niyko/Hydra-Dark-Theme-for-Adminer/master/adminer.css -O /var/www/html/adminer.css &> /dev/null
 
     wp core download --allow-root
     wp config create --dbname=$WP_DATABASE_NAME --dbuser=$WP_DATABASE_USR --dbpass=$WP_DATABASE_PWD --dbhost=$MYSQL_HOST --dbcharset="utf8" --dbcollate="utf8_general_ci" --allow-root
@@ -473,7 +479,7 @@ if [ ! -f "/var/www/html/index.html" ]; then
 fi
 
 echo "Wordpress started on :9000"
-/usr/sbin/php-fpm7 -F -R
+/usr/sbin/php-fpm7.3 -F -R
 #+end_src
 
 
@@ -497,9 +503,9 @@ error) that can be accessed by any number of containers. Usually,
 #+begin_src docker-compose
   mariadb:
     container_name: mariadb
-    build: ./srcs/requirements/mariadb/
+    build: ./requirements/mariadb/
     volumes:
-      - /home/tgarriss/mariadb_data:/var/lib/mariadb/
+      - db_volume:/var/lib/mariadb/
     networks:
       - network
     env_file:
@@ -518,7 +524,14 @@ FROM debian:buster
 RUN apt-get -y update
 RUN apt-get -y install mariadb-server mariadb-client
 
+RUN mkdir -p /var/run/mysqld
+RUN chown -R mysql:mysql /var/run/mysqld
+RUN chmod 777 /var/run/mysqld
 
+COPY tools/db_install.sh /tmp/
+RUN chmod +x /tmp/db_install.sh
+
+ENTRYPOINT ["sh", "/tmp/db_install.sh"]
 
 EXPOSE 3306
 
@@ -553,19 +566,47 @@ networks:
 #+name: volume-compose
 #+begin_src docker-compose
 volumes:
-  mariadb_data:
+  db_volume:
     driver: local
     driver_opts:
       type: none
-      device: /home/tgarriss/mariadb_data
+      device: /home/tgarriss/data/mysql
       o: bind
-  wordpress_data:
+  wp_volume:
     driver: local
     driver_opts:
       type: none
-      device: /home/tgarriss/wordpress_data
+      device: /home/tgarriss/data/wordpress
       o: bind
 #+end_src
+** Makefile
+#+name: makefile
+#+header: :tangle ./Makefile
+#+begin_src makefile
+all:
+	mkdir -p /home/tgarriss/data/mysql
+	mkdir -p /home/tgarriss/data/wordpress
+	docker compose -f ./srcs/docker-compose.yml up -d --build
+
+down:
+	docker compose -f ./srcs/docker-compose.yml down
+
+clean:
+	docker stop $$(docker ps -qa)
+	docker rm $$(docker ps -qa)
+	docker rmi -f $$(docker images -qa)
+	docker volume rm $$(docker volume ls -q)
+	docker network rm $$(docker network ls -q)
+
+fclean: clean
+	rm -Rf /home/tgarriss/data/mysql
+	rm -Rf /home/tgarriss/data/wordpress
+
+re: fclean all
+
+.PHONY: all down clean re
+#+end_src
+
 * Production :noexport:
 ** docker-compose
 #+name: full-docker-compose
@@ -689,8 +730,8 @@ clean:
 ; Unix user/group of processes
 ; Note: The user is mandatory. If the group is not set, the default user's group
 ;       will be used.
-user = nginx
-group = nginx
+;user = www-data
+;group = www-data
 
 ; The address on which to accept FastCGI requests.
 ; Valid syntaxes are:

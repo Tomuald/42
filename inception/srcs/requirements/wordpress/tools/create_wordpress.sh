@@ -1,21 +1,28 @@
-#!/bin/bash
+#!bin/bash
 
-if [-f ./wp-config.php]
-then
-    echo "wordpress already set up"
-    echo "run fclean to remove data files"
-else
-    wget http://wordpress.org/latest.tar.gz
-    tar -zxvf latest.tar.gz
-    mv wordpress/* .
-    rm -rf latest.tar.gz
-    rm -rf wordpress
+set -eo pipefail
 
-    sed -i "s/username_here/$MYSQL_USER/g" wp-config-sample.php
-    sed -i "s/password_here/$MYSQL_PASSWORD/g" wp-config-sample.php
-    sed -i "s/localhost/$MYSQL_HOSTNAME/g" wp-config-sample.php
-    sed -i "s/database_name_here/$MYSQL_DATABASE/g" wp-config-sample.php
-    cp wp-config-sample.php wp-config.php
+if [ ! -f "/var/www/html/wp-config.php" ]; then
+	wp core download --allow-root --path="/var/www/html"
+
+	rm -f /var/www/html/wp-config.php8
+	rm -f /var/www/html/wp-config.php
+	rm -f /etc/php8/php-fpm.d/www.conf
+
+	cp ./www.conf /etc/php8/php-fpm.d/www.conf
+
+	for i in {0..42}; do
+		if mariadb -hmariadb -u$MYSQL_USER -p$MYSQL_PASSWORD --database=$MYSQL_DATABASE <<< 'SELECT 1;'&>/dev/null; then
+			break
+		fi
+		sleep 5
+	done
+
+	wp config create --allow-root --dbname=$MYSQL_DATABASE --dbuser=$MYSQL_USER --dbpass=$MYSQL_PASSWORD \
+		--dbhost=mariadb --dbcharset="utf8" --dbcollate="utf8_general_ci" --path="/var/www/html"
+
+	wp core install --allow-root --title="Inception" --admin_name="superuser" --admin_password="superuser" \
+		--admin_email="email@email.com" --skip-email --url="tgarriss.42.fr" --path="/var/www/html"
+	wp user create --allow-root $MYSQL_USER "other@email.com" --role=author --user_pass=$MYSQL_PASSWORD --path="/var/www/html"
+	echo "Wordpress has been set up"
 fi
-
-exec "$@"

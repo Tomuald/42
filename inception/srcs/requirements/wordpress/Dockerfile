@@ -1,25 +1,24 @@
-FROM debian:buster
+FROM alpine:3.16
 
-RUN apt-get -y update && apt-get -y upgrade
-RUN apt-get -y install wget bash php php-cgi php-mysql php-fpm php-pdo php-gd php-cli php-mbstring
-RUN apt-get -y install curl
+RUN apk update && apk upgrade && apk add php8 php8-fpm php8-opcache php8-mysqli php8-session php8-iconv php8-json php8-gd php8-curl php8-xml php8-common php8-imap php8-cgi php8-pdo php8-pdo_mysql php8-soap php8-posix php8-redis php8-gettext php8-ldap php8-ctype php8-dom php8-phar curl bash mariadb-client dumb-init
 
-# RUN rm -rf /var/lib/apt/lists/* # unnecessary I think, it just clears the apt cache.
+COPY ./tools/create_wordpress.sh ./create_wordpress.sh
+RUN chmod +x create_wordpress.sh
 
+COPY ./conf/www.conf ./www.conf
+
+RUN adduser -D tgarriss
+
+RUN mkdir -p /var/www/html
+RUN chmod 777 -R /var/www/html
+RUN chown -R tgarriss /var/www/html
 RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+
 RUN chmod +x wp-cli.phar
-RUN mv wp-cli.phar /usr/local/bin/wp
-
-COPY ./conf/www.conf /etc/php/7.3/fpm/pool.d/
-
-RUN mkdir -p /run/php
-
-COPY ./tools/create_wordpress.sh /usr/local/bin
-RUN chmod +x /usr/local/bin/create_wordpress.sh
-ENTRYPOINT ["/usr/local/bin/create_wordpress.sh"]
-
-WORKDIR /var/www/html/
+RUN mv -f wp-cli.phar /usr/local/bin/wp
 
 EXPOSE 9000
 
-CMD ["/usr/sbin/php-fpm7.3", "-F"]
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+
+CMD ["bash", "-c", "./create_wordpress.sh && exec php-fpm8 -F"]

@@ -1,37 +1,28 @@
-#!/bin/sh
-
-mysql_install_db
-
-/etc/init.d/mysql start
-
-if [-d "/var/lib/mysql/$MYSQL_DATABASE"]
-then
-    echo "database already exists."
+if [ -f ".a" ]; then
+	echo "DB is already set up"
 else
-mysql_secure_installation << _EOF_
+	echo "Setting up the DB"
+	mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
 
-Y
-root
-root
-Y
-n
-Y
-Y
-_EOF_
+	mysqld --user=mysql --datadir=/var/lib/mysql &
+	sleep 5
 
-echo "GRANT ALL ON *.* TO 'root'@'%' IDENTIFIED BY '$MYSQL_ROOT_PASSWORD'; FLUSH PRIVILEGES;" | mysql -uroot
-echo "CREATE DATABASE IF NOT EXISTS $MYSQL_DATABASE; GRANT ALL ON $MYSQL_DATABASE.* TO '$MYSQL_USER'@'%' IDENTIFIED BY '$MYSQL_PASSWORD'; FLUSH PRIVILEGES;" | mysql -u root
+	mysql -e "CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};"
+	echo "DB is created"
 
-UPDATE mysql.user SET plugin = '' WHERE user = 'root' AND host = 'localhost';
-FLUSH PRIVILEGES;
+	mysql -e "CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'localhost' IDENTIFIED BY '${MYSQL_PASSWORD}';"
+	echo "User ${MYSQL_USER} created"
 
-mysql -uroot -p$MYSQL_ROOT_PASSWORD $MYSQL_DATABASE < /tmp/datadump.sql
+	mysql -e "GRANT ALL PRIVILEGES ON \`${MYSQL_DATABASE}\`.* TO \`${MYSQL_USER}\`@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';"
+	echo "Privileges have been granted"
+
+	mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';"
+	echo "Root password is now set"
+
+	mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "FLUSH PRIVILEGES;"
+	echo "Privileges have been flushed"
+
+	touch ".a"
+	pkill mysqld
 
 fi
-
-/etc/init.d/mysql stop
-# exec "$@" is necessary for proper signal handling; it makes the
-# final running application become the container’s PID 1. This allows
-# the application to receive any Unix signals sent to the container.
-# it replaces the parent process with the child process
-exec "$@"

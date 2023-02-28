@@ -447,10 +447,6 @@ how it maps to the functions. Is it getting the address of that
 function for that instance? Gotta figure that out...
 
 ** new and delete
-:PROPERTIES:
-:SCHEDULED: <2022-11-14>
-
-:END:
 Even though malloc is allowed in C++, NEVER use it. Use new and delete
 because these functions call, respectively, the object's constructor
 and destructor. Here's how you can allocate memory in C++:
