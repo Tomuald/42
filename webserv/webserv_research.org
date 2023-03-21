@@ -56,7 +56,8 @@ kqueue()...
     signals, timers, user-defined events, ...
 
 ** fork()
-Must SOLELY be used to run CGI scripts.
+Per the project description, fork() must SOLELY be used to run CGI
+scripts.
 
 When a CGI script is executed, the web server typically forks a new
 process to handle the request and runs the script in the child

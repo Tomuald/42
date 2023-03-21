@@ -39,6 +39,7 @@ void Configuration::getNumServers(void) {
   std::string   line;
   bool          inside_server_block;
 
+  inside_server_block = false;
   while (std::getline(this->_configuration_file, line)) {
     if (line.find("{") != std::string::npos && line.find("server") != std::string::npos) {
       inside_server_block = true;
@@ -59,6 +60,7 @@ std::map<std::string, std::string> *Configuration::getServerBlocks(void) {
   bool          inside_server_block;
   int           index;
 
+  inside_server_block = false;
   server_blocks = new std::map<std::string, std::string>[this->_numServers];
   index = 0;
   while (std::getline(this->_configuration_file, line)) {
@@ -70,17 +72,30 @@ std::map<std::string, std::string> *Configuration::getServerBlocks(void) {
       inside_server_block = false;
       index++;
     }
-    if (inside_server_block) {
-      std::string::size_type pos = line.find_first_not_of(" \t");
+    if (inside_server_block && line.find("location") != std::string::npos) {
+      std::string location_block;
 
-      if (pos != std::string::npos) {
-        std::string newtoken = line.substr(pos);
-        std::vector<std::string> tokens;
-        std::istringstream iss(newtoken);
-        std::string token;
-        while (std::getline(iss, token, ' '))
-            tokens.push_back(token);
+      while (line.find("}") != std::string::npos) {
+        std::getline(this->_configuration_file, location_block);
+      }
+    }
+    if (inside_server_block) {
+      std::vector<std::string> tokens;
+      std::istringstream iss(line);
+
+      std::string token;
+      while (iss >> token) {
+        tokens.push_back(token);
+      }
+      if (tokens.size() >= 2)
         server_blocks[index].insert(std::make_pair(tokens[0], tokens[1]));
+      else {
+        if (tokens.size() == 1)
+          server_blocks[index].insert(std::make_pair(tokens[0], ""));
+        else if (tokens.size() == 0)
+          server_blocks[index].insert(std::make_pair("", ""));
+        else
+          std::cout << "unexpected case" << std::endl;
       }
     }
   }
@@ -94,12 +109,16 @@ int Configuration::parse(void) {
   std::map<std::string, std::string>  *server_blocks;
 
   server_blocks = getServerBlocks();
-
+  if (server_blocks->size() == 0)
+    return (-1);
   for (int i = 0; i < this->_numServers; i++) {
     std::map<std::string, std::string>::iterator it;
+
+    std::cout << "Server #" << i << std::endl;
     for (it = server_blocks[i].begin(); it != server_blocks[i].end(); it++) {
       std::cout << "Key: " << it->first << ", Value: " << it->second << std::endl;
     }
+    std::cout << std::endl;
   }
 
   delete [] server_blocks;
