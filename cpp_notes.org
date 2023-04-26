@@ -2,7 +2,7 @@
 #+title: Notes
 :END:
 
-A collection of notes concerning 42 Projects.
+A collection of notes concerning C++.
 
 * C++
 ** files & extensions
