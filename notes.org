@@ -1583,7 +1583,7 @@ Maps are like python dictionnaries (key, value pairs).
 The algorithm library allows you to use stuff that can help manipulate
 data... For example, ~for_each~, which you can use:
 
-#+BEGIN_SRC C++
+#+BEGIN_SRC C++ :results table replace
 #include <iostream>
 #include <algorithm>
 #include <list>
@@ -1602,4 +1602,3 @@ int main(void) {
   return (0);
 }
 #+END_SRC
-

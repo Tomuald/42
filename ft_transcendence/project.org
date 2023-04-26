@@ -1,0 +1,49 @@
+#+title: ft_transcendence
+
+ft_transcendence is the last project of 42's common core!
+
+* Requirements
+** Overview
+- Backend should be NestJS
+- Frontend should be typescript
+- Database should be PostgreSQL
+- Single Page App
+- Launched: ~docker-compose up --build~
+** Security
+- Passwords must be hashed
+- SPA must be secured against SQL injections
+- Server must handle form and request validation
+- API keys, environment variables, etc. must be stored in .env file,
+  and ignored by git
+** User Accounts
+- Must login with 42's OAUTH system
+- Usernames must be unique
+- Users must have avatars (default, or user-uploaded)
+- Implement 2FA
+- Have friends, and display status
+- game statistics
+- match history
+** Chat
+- Users can create channels (public, private, password protected)
+- can send direct messages
+- can block other users
+- Channels have owners, administrators, and basic users
+- Users can be kicked, banned, or muted
+- From the chat, Users can start pong games and see profiles
+** The Game
+- create a live pong game
+- there must be a matchmaking system
+- anything goes for graphics, and gameplay design
+- must include customization options
+- must be responsive, and free of lag
+* Research
+** PostgreSQL
+database stuff
+** NestJS
+backend stuff
+** VueJS
+frontend stuff
+** 42API
+OAUTH and login stuff
+** docker-compose
+devops stuff

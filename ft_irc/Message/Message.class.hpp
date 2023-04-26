@@ -15,6 +15,8 @@ public:
 
   Message& operator=(Message const & rhs);
 
+  std::vector<std::string> & getParams(void);
+
   std::string prefix;
   std::string command;
   std::vector<std::string> params;

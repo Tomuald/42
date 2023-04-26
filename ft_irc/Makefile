@@ -9,6 +9,15 @@ SRCS	=	Server/Server.class.cpp		\
 			Server/Commands/quit.cpp	\
 			Server/Commands/pass.cpp	\
 			Server/Commands/join.cpp	\
+			Server/Commands/privmsg.cpp	\
+			Server/Commands/pong.cpp	\
+			Server/Commands/who.cpp		\
+			Server/Commands/part.cpp	\
+			Server/Commands/mode.cpp	\
+			Server/Commands/die.cpp		\
+			Server/Commands/oper.cpp	\
+			Server/Commands/kick.cpp	\
+			Server/Commands/topic.cpp	\
 			response.cpp				\
 
 OBJS	=	${SRCS:.cpp=.o}
