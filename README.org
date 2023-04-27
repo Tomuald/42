@@ -14,7 +14,7 @@ scratch.
 ** cpp
 a first introduction to c++
 ** fdf
-display a wireframe using an isometric projection from a heightmap
+from a heightmap, display a wireframe using an isometric projection
 ** ft_transcendance
 create a website where you can play pong with your friends! Built
 using NestJS, VueJS, and PostgreSQL. Still in development.
