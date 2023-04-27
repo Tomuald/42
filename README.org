@@ -2,7 +2,7 @@
 
 You'll find several projects from 42Quebec. C, C++, NestJS, VueJS.
 
-* Cub3D:
+* Cub3D
 implement a raytracer like the original wolfenstein
 * ft_irc
 create a simple IRC server in C++98 that respects the RFC, and can
