@@ -38,12 +38,414 @@ ft_transcendence is the last project of 42's common core!
 - must be responsive, and free of lag
 * Research
 ** PostgreSQL
-database stuff
+Tables for your database will actually be built within NestJS! Neat!
+No fucking around with SQL calls.
+
+You're gonna be using TypeORM for this. It is written in TypeScript
+and it integrates very well with the Nest framwork.
+
+Install using: ~$ npm install --save @nestjs/typeorm typeorm pg~
+
+Remember to import the TypeOrm module into the application's root
+module. Make it look something like this:
+#+begin_src js
+//app.module.ts
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
+@Module({
+  imports: [
+    TypeOrmModule.forRoot({
+      type: 'mysql',
+      host: 'localhost',
+      port: 3306,
+      username: 'root',
+      password: 'root',
+      database: 'test',
+      entities: [],
+      synchronize: true,
+    }),
+  ],
+})
+export class AppModule {}
+
+#+end_src
+
+Follow [[https://docs.nestjs.com/techniques/database][the docs]] at this page, for more information.
 ** NestJS
-backend stuff
+A simple setup workflow:
+
+#+begin_src bash
+npm i -g @nestjs/cli # installs the nest program
+nest new project-name # creates a new project
+#+end_src
+
+This will create a <project-name> directory; within, a src directory
+with some boilerplate files.
++------------------------+----------------------------------------------------------------+
+| app.controller.ts      | A basic controller with a single route.                        |
++------------------------+----------------------------------------------------------------+
+| app.controller.spec.ts | The unit tests for the controller.                             |
++------------------------+----------------------------------------------------------------+
+| app.module.ts          | The root module of the application.                            |
++------------------------+----------------------------------------------------------------+
+| app.service.ts         | A basic service with a single method.                          |
++------------------------+----------------------------------------------------------------+
+| main.ts                | The entry file of the application which uses the core function |
+|                        | NestFactory to create a Nest application instance.             |
++------------------------+----------------------------------------------------------------+
+
+The main.ts file includes an async function which bootstraps the
+application. "Bootstrapping" an application refers to the process of
+setting up the application environment, initializing dependencies, and
+starting the application itself.
+
+Once your stuff is built, you can use the ~npm run
+start:<dev|prod|...>~ command to launch the app. You can access it
+from your browser at the port number you specified in main.ts.
+
+*** CLI stuff
+Use the ~nest g resource <resource_name>~ command to create Modules,
+Controllers, and Services, all in one go.
+
+1) ~nest new <project-name>~: creates a new NestJS project with the
+   specified name.
+2) ~nest generate <schematic> <name>~: generates a new file or module
+   using a predefined schematic. Schematics include things like
+   modules, controllers, services, and more.
+3) ~nest build~: compiles the NestJS application into JavaScript files
+4) ~nest start~: starts the NestJS application and runs it in watch
+   mode, automatically recompiling and restarting the appwhen changes
+   are detected.
+5) ~nest test~: runs the tests for the NestJS application
+6) ~nest lint~: checks the code for linting errors using the TSLint
+   library
+7) ~nest format~: formats the code using the Prettier code formatter
+8) ~nest add <package>~: installs and configures a new package for the
+   NestJS application
+9) ~nest update~: updates the NestJS application's dependencies to their
+   latest versions
+10) ~nest info~: displays information about the NestJS application,
+    including the installed dependencies and their versions
+ 
+*** Modules
+A module has providers and controllers. You can have multiple modules
+in an App; they encapsulate a related set of functionalities; likely a
+module will be a feature (Users, Chat, Store, ..). An App always has a
+root module with other 'leaf' module underneath (they're built like
+trees).
+
+For most applications, the resulting architecture will employ multiple
+modules, each encapsulating a closely related set of capabilities.
+Each module should be kept in its specific directory. This will be
+done by default when using the CLI to create your files.
+
+#+begin_src javascript
+@Module({
+    imports: [<module-name>],
+    controllers: [AppController, <controller-name>, ...],
+    providers: [AppService, <provider-name>, ...],
+})
+
+export class AppModule {}
+#+end_src
+
+Use the command line program to create your files. It comes with some
+boilerplate and updates current files to fit your new module.
+
+*** Controllers
+Controllers are responsible for handling incoming requests and
+returning responses to the client. Basically, they define what happens
+when you get a ~GET/POST/PUT/DELETE~ request.
+
+Controllers are really lean routers that validate data, and send it
+to other endpoints.
+
+Classes and decorators are the main building blocks of controllers.
+
+Use the ~@Get~ or ~@Post~ or ~...~ decorator to specify which HTTP
+request you're handling, and what you do with it. You can pass an
+argument to specify a path to be appended to the controllers path. In
+the case below, the full path would become ~localhoststuff:3000/id~.
+
+#+begin_src js
+@Controller('stuff') // == example.com/stuff
+export class StuffController {
+    // GET example.com/stuff --> [..., ]
+    @Get()
+    getStuff() {
+        return [];
+    }
+    // GET /stuff/:id --> [x]
+    @Get(':id')
+    getOneStuff() {
+        return {};
+    }
+    // POST /stuff
+    @Post()
+    createStuff() {
+        return {};
+    }
+    // PUT /stuff/:id --> [x]
+    @Put(':id')
+    updateStuff() {
+        return {};
+    }
+    // DELETE /stuff/:id
+    @Delete(':id')
+    removeStuff() {
+        return {};
+    }
+}
+#+end_src
+
+To parse arguments out of the url that requested something, use the
+the ~@Param~ decorator:
+#+begin_src js
+@Get(':id')
+getOneStuff(@Param('id' id: string)) {
+    return {
+        id,
+    };
+}
+#+end_src
+
+This sets what the ~@Get~ decorator parsed, and stores it in the ~id~
+variable so that you can use it within your function. It would seem
+likely that you could have multiple args that were parsed.
+
+You will also get queries in your requests: ~/stuff?type=random~. You
+can parse it the same way as above.
+#+begin_src js
+@Get()
+getStuff(@Query('type' type: string)) {
+    return {
+        type,
+    };
+}
+#+end_src
+
+Handlers often need access to the client's request. Use the ~@Req~
+decorator to pass it to your functions. Or if you only need one
+element from the request, consider using the dedicated decorators, you
+can find a list of them on the [[https://expressjs.com/en/api.html#req][NestJS docs]].
+
+#+begin_src js
+@Controller('stuff')
+export class StuffController {
+    @Get()
+    findAll(@Req() request: Request): string {
+        return ("This returned all stuffs");
+    }
+}
+#+end_src
+
+For POST requests, you need to parse out the request body. Dto files
+are created automatically from the nest cli.
+
+You wanna type the request bodies, and you do that with DTOs (Data
+Transfer Objects).
+
+#+begin_src js
+@Post()
+createStuff(@Body() createStuffDto: CreateStuffDto) {
+    return {
+        name: createStuffDto.name;
+    }
+}
+#+end_src
+
+A DTO is an object that is used to encapsulate data and transfer it
+between different layers of an application. In the context of NestJS,
+DTOs are commonly used to define the shape of data that is passed
+between the client and the server in the form of API requests and
+responses. By defining a DTO, you can ensure that the data being
+passed between the client and server is in the correct format, and
+that it contains all the necessary information.
+
+In addition to providing a way to transfer data between layers of an
+application, DTOs can also be used to enforce business rules and
+validation logic. For example, you could define a DTO that includes
+validation logic to ensure that a user's email address is in the
+correct format before it is stored in a database.
+
+A simple Dto file would look like:
+#+begin_src js
+export class CreateStuffDto {
+    name: string;
+}
+#+end_src
+
+For updates, we use PUT
+#+begin_src js
+@Put(':id')
+updateStuff(@Param('id') id: string, @Body() updateStuffDto: UpdateStuffDto) {
+    return {
+        id,
+        name: updateStuffDto,
+    }
+}
+#+end_src
+*** Providers
+Providers are classes with an ~@Injectible~ decorator. They can be
+injected into any class that depends on it.
+
+A small digression. Arrow function syntax is a thing apparently. They
+allow you to define simple functions very quickly.
+#+begin_src js
+// traditional function syntax
+function add(a, b) {
+  return a + b;
+}
+
+// arrow function syntax
+const add = (a, b) => {
+  return a + b;
+};
+
+#+end_src
+
+#+begin_src js
+@Injectable()
+export class StuffService {
+    // this would likely link to a db instead...
+    // for now tho, this will be our 'db'
+    private stuffs = [
+        {id: 0, name: 'stuffA', size: 'small'},
+        {id: 1, name: 'stuffB', size: 'big'}
+    ]
+    getNames(name?: string) {
+        if (name) {
+
+            return this.stuffs.filter((iterator) => iterator.name === name)
+        }
+        return this.stuffs;
+    }
+    getName(id: number) {
+        // the arrow function (iterator) => iterator.id === id is
+        // used with the find method to return the first object
+        // from the stuffs array that has an id property equal to
+        // the id argument passed to the method.
+        const stuff = this.stuffs.find((iterator) => iterator.id === id)
+    }
+}
+#+end_src
+
+#+begin_src js
+@Controller('stuff')
+export class StuffController {
+    constructor(private readonly stuffService: StuffService) {}
+
+    @Get()
+    getStuff(@Query('name') name: string) {
+        return this.stuffService.getNames(name);
+    }
+}
+#+end_src
+*** Exception Handling
+Basically the same thing as in C++. Exceptions bubble up to the
+previous function on the stack, so you must implement try/catch blocks
+for exceptions to be handled properly. You might have to bubble up a
+few levels... Exceptions can be customized.
+
+You can find a list of these exceptions in [[https://docs.nestjs.com/exception-filters][the docs]].
+*** Pipes
+Pipes do basically two things:
+  1) transform input data to the desired form (int -> string, ...)
+  2) evaluate input data, and if valid, simply passes it unchanged,
+     otherwise, throw an exception
+
+URLs come in strings, so often you might want to change it into
+another type that reflects the data you're storing. This is the
+transformation part.
+#+begin_src js
+export class stuffController {
+    @Get(':id')
+    getOneStuff(@Param('id', ParseIntPipe) id: number) {
+        try {
+            return this.stuffService.getNinja(id);
+        } catch (err) {
+            throw new NotFoundException();
+        }
+    }
+}
+#+end_src
+
+Now for validation... you might need to install some libraries...
+That's what [[https://youtu.be/dxPZzkXX9GE?t=131][the guy on youtube]] did. You can install them with: ~npm -i
+class-validator class-transformer~. You can think of these as
+additional decorators that check for types of things (i.e. isInt(),
+isEmail(), ...). ~ValidationPipe~ tells the Dto to use the decorators.
+
+There's a bit of automagick here. The decorators apply to the line
+directly below.
+#+begin_src js
+// CreateStuffDto
+import {MinLength} from 'class-validator';
+
+export class CreateStuffDto {
+    @MinLength(3)
+    name: string;
+
+    @IsEnum(['big', 'small'], {message: 'stuff is big or small. Nothing else.'})
+}
+
+// Controller
+export class stuffController {
+    @Post()
+    createStuff(@Body(new ValidationPipe()) createStuffDto: CreateStuffDto) {
+        return this.stuffService.createStuff(createStuffDto);
+    }
+}
+#+end_src
+*** Guards
+Guards check for authorization; they determine whether a given request
+will be handled by the route handler or not, depending on certain
+conditions.
+
+Use ~nest g guard <guard_name>~ to generate the files. Guards are
+injectable. You can attach guards to controllers or to individual
+methods in the controller.
+#+begin_src js
+@Controller('stuff')
+@UseGuards(StuffGuard)
+export class StuffController {
+    // guard affect every method
+}
+
+// or
+@Controller('stuff')
+export class StuffController {
+    // guard affects the createStuff() method
+    @Post()
+    @UseGuards(StuffGuard)
+    // createStuff()
+}
+#+end_src
+
+Guards return true or false, so you must customize the guards to fit
+your needs based on a specified logic.
+#+begin_src js
+// Guard.ts
+@Injectable()
+export class StuffGuard implements CanActivate {
+    canActivate(
+        context: ExecutionContext,
+    ): boolean | Promise<boolean> | Observable<boolean> {
+        const request = context.switchToHttp().getRequest();
+        // validate request
+        const hasProperAuth = request.user.isAdmin();
+        return true;
+    }
+}
+#+end_src
 ** VueJS
 frontend stuff
 ** 42API
 OAUTH and login stuff
 ** docker-compose
-devops stuff
+Very likely, we'll want to use different containers for our services;
+being, respectively, NestJS (the backend), VueJS (the frontend), and
+the database (postgresql).
+
+So we'll be using docker-compose
