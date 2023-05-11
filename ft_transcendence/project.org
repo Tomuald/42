@@ -2,7 +2,20 @@
 
 ft_transcendence is the last project of 42's common core!
 
-* Requirements
+
+* Requirements :TOC:
+  - [[#overview][Overview]]
+  - [[#security][Security]]
+  - [[#user-accounts][User Accounts]]
+  - [[#chat][Chat]]
+  - [[#the-game][The Game]]
+- [[#research][Research]]
+  - [[#postgresql][PostgreSQL]]
+  - [[#nestjs][NestJS]]
+  - [[#vuejs][VueJS]]
+  - [[#42api][42API]]
+  - [[#docker-compose--devops][docker-compose & devops]]
+
 ** Overview
 - Backend should be NestJS
 - Frontend should be typescript
@@ -35,7 +48,7 @@ ft_transcendence is the last project of 42's common core!
 - there must be a matchmaking system
 - anything goes for graphics, and gameplay design
 - must include customization options
-- must be responsive, and free of lag
+# - must be responsive, and free of lag
 * Research
 ** PostgreSQL
 Tables for your database will actually be built within NestJS! Neat!
