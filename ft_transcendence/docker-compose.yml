@@ -1,11 +1,40 @@
 version: '3'
+
 services:
+  # the api
   nestjs:
-    build:
-      context: .
-      dockerfile: Dockerfile-nestjs
-    volumes:
-      - .:/usr/src/app
-    command: npm run start:dev
+    image: nestjs
+    depends_on:
+      - postgres
+    networks:
+      - db
     ports:
-      - 3000:3000
+      - "3000:3000"
+    env_file:
+      - .env
+  
+  # a useful admin page to interact w/ postgres
+  pgadmin:
+    image: dpage/pgadmin4:6.18
+    volumes:
+      - ~/data/pgadmin:/root/.pgadmin
+    networks:
+      - db
+    ports:
+      - "8080:80"
+    env_file:
+      - docker.env
+
+  # the database
+  postgres:
+    image: postgres:15.1
+    volumes:
+      - ~/data/postgres:/data/postgres
+    networks:
+      - db
+    env_file:
+      - docker.env
+
+networks:
+  db:
+    driver: bridge
