@@ -443,9 +443,53 @@ export class StuffGuard implements CanActivate {
 frontend stuff
 ** 42API
 OAUTH and login stuff
-** docker-compose
+** docker-compose & devops
 Very likely, we'll want to use different containers for our services;
 being, respectively, NestJS (the backend), VueJS (the frontend), and
 the database (postgresql).
 
-So we'll be using docker-compose
+So we'll be using docker-compose.
+
+Allright, so. Using the Macs at school was kind of a shitshow but I
+think I got it working OK.
+
+This [[https://wanago.io/2023/01/16/api-nestjs-docker-compose/][tutorial]] helped me out a lot to figure out Dockerfiles and
+docker-compose.
+
+*** installing npm
+
+Start off by installing node. This is gonna take a long while.
+
+#+begin_src bash
+brew install node
+#+end_src
+
+Add your homebrew directory to your path.
+
+#+begin_src bash
+export PATH=$PATH:~/homebrew/bin
+#+end_src
+
+Then, you want to install nest.
+
+#+begin_src bash
+npm install -g @nestjs/cli
+#+end_src
+
+There was a conflict with the binaries. For some reason, I couldn't
+find the nestjs/cli binary after having installed it. I ended up using
+the npx to run the nestjs/cli commands.
+
+To create a new project:
+#+begin_src bash
+npx @nestjs/cli new <project-name>
+
+# or using an existing project folder...
+npx @nestjs/cli new .
+#+end_src
+
+To spin up the new app:
+#+begin_src bash
+cd <project-name>
+npm run start:dev
+#+end_src
