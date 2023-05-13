@@ -3,25 +3,41 @@ version: '3'
 services:
   # the api
   nestjs:
-    image: nestjs
+    #image: nestjs-api
+    build: ./backend
     depends_on:
       - postgres
+    volumes:
+      - ./backend:/usr/src/backend/
     networks:
       - db
     ports:
       - "3000:3000"
     env_file:
       - .env
+
+  # the frontend
+  vuejs:
+    build: ./frontend
+    depends_on:
+      - postgres
+      - nestjs
+    networks:
+      - db
+    ports:
+      - "8080:8080"
   
   # a useful admin page to interact w/ postgres
   pgadmin:
     image: dpage/pgadmin4:6.18
+    depends_on:
+      - postgres
     volumes:
       - ~/data/pgadmin:/root/.pgadmin
     networks:
       - db
     ports:
-      - "8080:80"
+      - "8081:80"
     env_file:
       - docker.env
 
@@ -38,3 +54,6 @@ services:
 networks:
   db:
     driver: bridge
+
+
+  
