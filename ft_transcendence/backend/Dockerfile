@@ -2,7 +2,7 @@ FROM node:18-alpine
 
 WORKDIR /usr/src/backend
 
-#COPY . .
+COPY . .
 
 RUN npm i -g @nestjs/cli
 
@@ -10,11 +10,12 @@ RUN npm ci --omit=dev
 
 RUN npm run build
 
-RUN npm install pm2 -g
+RUN npm install @nestjs/typeorm pg typeorm
+RUN npx typeorm init --database postgress --express
 
 USER node
 
 EXPOSE 3000
 
-CMD ["pm2-runtime", "npm", "--", "run", "start:prod"]
-#CMD ["npm", "run", "start:prod"]
+
+CMD ["npm", "--", "run", "start:prod"]

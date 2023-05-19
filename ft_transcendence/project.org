@@ -469,7 +469,7 @@ think I got it working OK.
 This [[https://wanago.io/2023/01/16/api-nestjs-docker-compose/][tutorial]] helped me out a lot to figure out Dockerfiles and
 docker-compose.
 
-*** installing npm
+*** NestJS Setup
 
 Start off by installing node. This is gonna take a long while.
 
@@ -505,4 +505,12 @@ To spin up the new app:
 #+begin_src bash
 cd <project-name>
 npm run start:dev
+#+end_src
+*** VueJS Setup
+Pretty simple.
+
+#+begin_src bash
+npm install -g @vue/cli # installs vue/cli
+
+vue create my-project # create a new project
 #+end_src
